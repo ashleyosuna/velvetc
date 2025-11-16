@@ -1,13 +1,21 @@
 import sys
+from utils import settings
+from readSet import parse_and_read_file
+from kmerOccurrenceTable import kmer_occurrences
 
+# getting command-line arguments
 argv = sys.argv
-k = argv[1]
+output_dir, filepath, hash_length, file_format, read_type = settings(argv[1:])
 
-# Rough outline
 # 1. Read input file (focus on FASTA/FASQ files)
+reads = parse_and_read_file(filepath, file_format)
+
 # 2. Build kmer hash table
     # For each k-mer observed in the set of reads, the hash table records the ID of the first read encountered containing that k-mer and the position of its occurrence within that read. 
     # Each k-mer is recorded simultaneously to its reverse complement. 
+kmers, reverse_kmers = kmer_occurrences(reads, hash_length)
+
+print(kmers, reverse_kmers) 
 # 3. Build roadmaps
     # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
 # 4. Build second database

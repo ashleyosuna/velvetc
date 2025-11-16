@@ -37,5 +37,3 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = False, no_ha
             seqs.append(line)
 
     return dict(zip(names, seqs))
-
-print(parse_and_read_file('tests/simple.fasta'))
