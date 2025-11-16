@@ -13,17 +13,17 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = False, no_ha
             content = f.readlines()
     else:
         print(f"Filetype {filetype} is not yet supported.")
-        exit(0)
+        return {}
 
     # verifying file is in correct format
     if filetype in ["FASTA_GZ", "FASTA"]:
         if len(content) and len(content[0]) and content[0][0] != '>':
             print(f"{filename} does not seem to be in FASTA format.")
-            exit(0)
+            return {}
     elif filetype in ["FASTQ_GZ", "FASTQ"]:
         if len(content) and len(content[0]) and content[0][0] != '@':
             print(f"{filename} does not seem to be in FASTQ format.")
-            exit(0)
+            return {}
     
     # parsing read ids and their corresponding sequence
     names, seqs = [], []
