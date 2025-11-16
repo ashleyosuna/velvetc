@@ -1,4 +1,5 @@
 import gzip
+import sys
 
 """
 Functions associated with parsing input files.
@@ -13,17 +14,17 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = False, no_ha
             content = f.readlines()
     else:
         print(f"Filetype {filetype} is not yet supported.")
-        return {}
+        sys.exit(0)
 
     # verifying file is in correct format
     if filetype in ["FASTA_GZ", "FASTA"]:
         if len(content) and len(content[0]) and content[0][0] != '>':
             print(f"{filename} does not seem to be in FASTA format.")
-            return {}
+            sys.exit(0)
     elif filetype in ["FASTQ_GZ", "FASTQ"]:
         if len(content) and len(content[0]) and content[0][0] != '@':
             print(f"{filename} does not seem to be in FASTQ format.")
-            return {}
+            sys.exit(0)
     
     # parsing read ids and their corresponding sequence
     names, seqs = [], []
@@ -36,3 +37,5 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = False, no_ha
             seqs.append(line)
 
     return dict(zip(names, seqs))
+
+print(parse_and_read_file('tests/simple.fasta'))
