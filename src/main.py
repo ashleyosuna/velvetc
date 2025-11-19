@@ -1,7 +1,10 @@
 import sys
 from utils import settings
 from readSet import parse_and_read_file
-from kmerOccurrenceTable import kmer_occurrences
+from kmerOccurrenceTable import kmer_occurrences, kmer_to_id
+from second_db import build_second_db
+
+# from roadmap import hash_kmers
 
 # getting command-line arguments
 argv = sys.argv
@@ -14,10 +17,18 @@ reads = parse_and_read_file(filepath, file_format)
     # For each k-mer observed in the set of reads, the hash table records the ID of the first read encountered containing that k-mer and the position of its occurrence within that read. 
     # Each k-mer is recorded simultaneously to its reverse complement. 
 kmers, reverse_kmers = kmer_occurrences(reads, hash_length)
+khash = kmer_to_id(kmers)
 
-print(kmers, reverse_kmers) 
+# print(kmers, reverse_kmers) 
+print(kmers)
+print("\n", khash)
 # 3. Build roadmaps
     # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
+
+second_db = build_second_db(reads, hash_length, khash)
+print("\n")
+print(second_db)
+
 # 4. Build second database
     # A second database is created with the opposite information. It records, for each read, which of its original k-mers are overlapped by subsequent reads.
 # 5. Build graph
