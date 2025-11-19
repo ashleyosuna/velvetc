@@ -2,7 +2,7 @@ import sys
 
 def reverse_complement(seq: str):
     complements = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
-    return "".join([complements[base] for base in seq])
+    return "".join(reversed([complements[base] for base in seq]))
 
 def canonical_form(seq: str):
     rev_seq = reverse_complement(seq)
@@ -17,7 +17,7 @@ def settings(args):
     filepath = args[1]
 
     # setting default options
-    k = 31
+    k = 3
     filetype = "FASTA"
     read_type = "short"
 
