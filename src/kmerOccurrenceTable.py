@@ -23,15 +23,31 @@ from utils import canonical_form, reverse_complement
 #         self._kmerOccurrences.setdefault(reverse, (readId, coordinate))
 
 def kmer_occurrences(reads, k):
+    """Records all k-mer occurrences {'kmer': [(read_id, position)]}"""
     kmers = {}
     reverse_kmers = {}
 
     for read_name, seq in reads.items():
         for i in range(len(seq) - k + 1):
             canonical_kmer = canonical_form(seq[i:i+k])
-            rev_kmer = reverse_complement(canonical_kmer)
+            rev_kmer = reverse_complement(canonical_kmer) # what is rev_kmer for?
 
-            kmers.setdefault(canonical_kmer, (read_name, i))
-            reverse_kmers.setdefault(rev_kmer, (read_name, i))
+            # kmers.setdefault(canonical_kmer, (read_name, i))
+            # reverse_kmers.setdefault(rev_kmer, (read_name, i))
+
+            if canonical_kmer in kmers:
+                kmers[canonical_kmer].append((read_name, i))
+            else:
+                kmers[canonical_kmer] = [(read_name, i)]
     
     return kmers, reverse_kmers
+
+def kmer_to_id(kmers):
+    """Returns khash: {id, 'kmer'}"""
+    khash = {}
+    count = 0
+    for kmer in kmers:
+        khash[kmer] = count
+        count += 1
+
+    return khash
