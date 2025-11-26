@@ -1,13 +1,84 @@
-from utils import canonical_form
+from utils import canonical_form, reverse_complement
+from typing import List, Tuple, Dict
+from collections import defaultdict
 
 # TODO: convert this into a graph class
 
-def create_pre_nodes(reads, kmer_table, hash_length):
-    pre_nodes = []
+class Node:
+    descriptor: str
+    def __init__(self, descriptor):
+        self.descriptor: str = descriptor
+    
+    def __repr__(self):
+        return self.descriptor
+    
+class Graph:
+    def __init__(self):
+        self.source = Node('-1')
+        self.blocks : List[Tuple[Node, Node]] = []
+        # self.edges: List[Tuple[Node, Node]] = []
+        self.edges: Dict[str, List[Tuple[Node, Node]]] = {}
+        self._map_to_nodes: Dict[str, Node] = {}
 
+    def _add_node(self, node: Node):
+        self._map_to_nodes[node.descriptor] = node
+
+        rc = reverse_complement(node.descriptor)
+        rc_node = Node(rc)
+        self._map_to_nodes[rc] = rc_node
+
+        self.blocks.append((node, rc_node))
+
+    def _get_twin(self, node: Node):
+        rc = reverse_complement(node.descriptor)
+        return self._map_to_nodes[rc]
+    
+    def _add_edge(self, node_a, node_b):
+        # self.edges.append((node_a, node_b))
+        # self.edges.append((node_b, node_a))
+        if node_a.descriptor not in self.edges:
+            self.edges[node_a.descriptor] = []
+        if node_b.descriptor not in self.edges: 
+            self.edges[node_b.descriptor] = []
+        
+        self.edges[node_a.descriptor].append((node_a, node_b))
+        self.edges[node_b.descriptor].append((node_b, node_a))
+
+    def _get_other_end(self, node):
+        return
+    
+    def _has_single_edge(self, node):
+        # TODO: make this more efficient
+        incoming_edges = 0
+
+        for (descriptor, _) in self._map_to_nodes.items():
+            if descriptor == node.descriptor: continue
+
+            for (_, end) in self.edges[descriptor]:
+                if end.descriptor == node.descriptor: incoming_edges += 1
+                if incoming_edges > 1:
+                    return False
+        return True
+    
+    def _merge_nodes(self, node_a, node_b):
+
+        new_descriptor = node_a.descritor + node_b[-1]
+        print('new descriptor is', new_descriptor)
+
+        # set node a's descriptor to be the new descriptor
+        # avoid having to delete all node x -> node a and node a -> node x edges
+
+        # get all node_b -> node y edges
+
+        # delete previous entries in edges, _map_to_nodes
+        return
+
+def create_pre_nodes(reads, kmer_table, hash_length, graph):
     for i in range(len(reads)):
         seq = reads[i]
         start = 0
+
+        prev_node = graph.source
         
         # get initial kmer
         new_kmer = seq[start:hash_length]
@@ -26,11 +97,30 @@ def create_pre_nodes(reads, kmer_table, hash_length):
             if len(kmer_table[can_kmer]) > 1:
                 # create a new node for the previously uninterrupted sequence of kmers
                 if (end - 1) - start + 1 >= hash_length:
-                    pre_nodes.append(consecutive_seq)
+                    node = Node(consecutive_seq)
+                    graph._add_node(node)
+
+                    twin = graph._get_twin(node)
+
+                    graph._add_edge(prev_node, twin)
+                    prev_node = node
+                    # pre_nodes.append(node)
                 
                 # create a node for the overlapping kmer
                 if (i, dir, end - hash_length + 1) == first_occurrence:
-                    pre_nodes.append(new_kmer)
+                    node = Node(new_kmer)
+                    # pre_nodes.append(node)
+                    graph._add_node(node)
+                    twin = graph._get_twin(node)
+
+                    graph._add_edge(prev_node, twin)
+                    prev_node = node
+                
+                else:
+                    curr_node = graph._map_to_nodes[new_kmer]
+                    twin = graph._get_twin(curr_node)
+                    graph._add_edge(prev_node, twin)
+                    prev_node = curr_node
                 
                 # slide window
                 start = end - hash_length + 2
@@ -41,5 +131,27 @@ def create_pre_nodes(reads, kmer_table, hash_length):
             # if we have reached the end of the read and there is no overlap create a node
             # for this rightmost run of uninterrupted kmers
             if end == len(seq) - 1 and len(kmer_table[can_kmer]) == 1:
-                pre_nodes.append(consecutive_seq)
-    return pre_nodes
+                node = Node(consecutive_seq)
+                # pre_nodes.append(node)
+                graph._add_node(node)
+                twin = graph._get_twin(node)
+
+                graph._add_edge(prev_node, twin)
+                prev_node = node
+
+def concatenate_nodes(graph):
+    # go through nodes
+
+    # if node a has only one outgoing edge to node b and
+    # node b has only one incoming edge
+
+    for (descriptor, node) in graph._map_to_nodes.items():
+
+        if len(graph.edges[descriptor]) == 1:
+            other_end = graph.edges[descriptor][0][1]
+
+            if graph._has_single_edge(other_end):
+                print('concatenating', node, other_end)
+
+                graph._merge_nodes(node, other_end)
+    return
