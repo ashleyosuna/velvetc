@@ -1,12 +1,14 @@
 import sys
 
 def reverse_complement(seq: str):
+    copy = seq[::-1]
     complements = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
-    return "".join([complements[base] for base in seq])
+    return "".join([complements[base] for base in copy])
 
 def canonical_form(seq: str):
     rev_seq = reverse_complement(seq)
-    return min(seq, rev_seq)
+    # return min(seq, rev_seq)
+    return ((seq, 1) if seq < rev_seq else (rev_seq, -1))
 
 def settings(args):
     if len(args) < 2:
