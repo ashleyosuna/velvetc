@@ -24,7 +24,11 @@ graph.create_pre_nodes(reads, kmer_table, hash_length, pre_graph)
 
 graph.concatenate_nodes(pre_graph)
 
-print(pre_graph.nodes)
+print(pre_graph.nodes, pre_graph.starts)
+
+for n in pre_graph.nodes:
+    print(n[0].out_edges, n[0].in_edges)
+    print(n[1].out_edges, n[1].in_edges, '\n\n')
 
 # 3. Build roadmaps
     # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
