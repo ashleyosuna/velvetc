@@ -200,3 +200,21 @@ def concatenate_nodes(graph):
             graph.merge_nodes(start, end)
 
         if end == len(graph.nodes) - 1: break
+
+def tour_bus(graph):
+    """
+    Identifies bubbles in the graph, i.e., paths starting from the same node, and ending in the same node.
+    These are identified through BFS.
+    """
+
+    # BFS
+
+    # when a node has already been visited -> backtrack until first common ancestor
+
+    # if paths are very similar -> keep consensus
+
+def clip_tips(graph):
+    """
+    Removes tips from the graph that are less than 2 * k in length.
+    """
+    return
