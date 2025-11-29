@@ -6,64 +6,126 @@ from collections import defaultdict
 
 class Node:
     descriptor: str
+    in_edges: List[Node]
+    out_edges: List[Node]
+
     def __init__(self, descriptor):
         self.descriptor: str = descriptor
+
+        self.out_edges: List[Node] = []   # adjacency list
+        self.in_edges:  List[Node] = []
     
     def __repr__(self):
         return self.descriptor
+ 
+    def _has_single_out_edge(self):
+        # TODO: make this more efficient
+        # incoming_edges = 0
+
+        # for (descriptor, _) in self._map_to_nodes.items():
+        #     if descriptor == node.descriptor: continue
+
+        #     for (_, end) in self.edges[descriptor]:
+        #         if end.descriptor == node.descriptor: incoming_edges += 1
+        #         if incoming_edges > 1:
+        #             return False
+        # return True
+        return len(self.out_edges) == 1
+    
+    def _has_single_in_edge(self):
+        return len(self.in_edges) == 1
     
 class Graph:
     def __init__(self):
         self.source = Node('-1')
-        self.blocks : List[Tuple[Node, Node]] = []
+        # self.blocks : List[Tuple[Node, Node]] = []
         # self.edges: List[Tuple[Node, Node]] = []
-        self.edges: Dict[str, List[Tuple[Node, Node]]] = {}
-        self._map_to_nodes: Dict[str, Node] = {}
+        # self.edges: Dict[str, List[Tuple[Node, Node]]] = {}
+        # self._map_to_nodes: Dict[str, Node] = {}
+
+        self.nodes : Dict[str, Node] = {}
 
     def _add_node(self, node: Node):
-        self._map_to_nodes[node.descriptor] = node
+        # self._map_to_nodes[node.descriptor] = node
 
+        # rc = reverse_complement(node.descriptor)
+        # rc_node = Node(rc)
+        # self._map_to_nodes[rc] = rc_node
+
+        # self.blocks.append((node, rc_node))
+
+        self.nodes[node.descriptor] = node
+        
         rc = reverse_complement(node.descriptor)
         rc_node = Node(rc)
-        self._map_to_nodes[rc] = rc_node
-
-        self.blocks.append((node, rc_node))
+        self.nodes[rc] = rc_node
 
     def _get_twin(self, node: Node):
         rc = reverse_complement(node.descriptor)
-        return self._map_to_nodes[rc]
+        return self.nodes[rc]
     
     def _add_edge(self, node_a, node_b):
         # self.edges.append((node_a, node_b))
         # self.edges.append((node_b, node_a))
-        if node_a.descriptor not in self.edges:
-            self.edges[node_a.descriptor] = []
-        if node_b.descriptor not in self.edges: 
-            self.edges[node_b.descriptor] = []
+        # if node_a.descriptor not in self.edges:
+        #     self.edges[node_a.descriptor] = []
+        # if node_b.descriptor not in self.edges: 
+        #     self.edges[node_b.descriptor] = []
+
+        node_a.out_edges.append(node_b)
+        node_b.in_edges.append(node_a)
+
+        if node_a.descriptor != "-1":
+            node_a.in_edges.append(node_b)
+            node_b.out_edges.append(node_a)
+        # node_b.in_edges.append((node_a))
         
-        self.edges[node_a.descriptor].append((node_a, node_b))
-        self.edges[node_b.descriptor].append((node_b, node_a))
-
-    def _get_other_end(self, node):
-        return
+        # self.edges[node_a.descriptor].append((node_a, node_b))
+        # self.edges[node_b.descriptor].append((node_b, node_a))
     
-    def _has_single_edge(self, node):
+    def _has_single_edge(self):
         # TODO: make this more efficient
-        incoming_edges = 0
+        # incoming_edges = 0
 
-        for (descriptor, _) in self._map_to_nodes.items():
-            if descriptor == node.descriptor: continue
+        # for (descriptor, _) in self._map_to_nodes.items():
+        #     if descriptor == node.descriptor: continue
 
-            for (_, end) in self.edges[descriptor]:
-                if end.descriptor == node.descriptor: incoming_edges += 1
-                if incoming_edges > 1:
-                    return False
-        return True
+        #     for (_, end) in self.edges[descriptor]:
+        #         if end.descriptor == node.descriptor: incoming_edges += 1
+        #         if incoming_edges > 1:
+        #             return False
+        # return True
+        return len(self.in_edges) == 1
     
     def _merge_nodes(self, node_a, node_b):
+        twin = self._get_twin(node_b)
 
-        new_descriptor = node_a.descritor + node_b[-1]
+        new_descriptor = node_a.descriptor + twin.descriptor[-1]
         print('new descriptor is', new_descriptor)
+
+
+        # node_a.out_edges = node_b.out_edges
+        outgoing_edges: List[Node] = []
+        for n in node_a.out_edges:
+            if n.descriptor != node_b.descriptor: outgoing_edges.append(n)
+        for n in node_b.out_edges:
+            if n.descriptor != node_a.descriptor: outgoing_edges.append(n)
+        # node_a.in_edges = [n for n in node_a.in_edges if n.descriptor != node_b.descriptor]
+        node_a.out_edges = outgoing_edges
+
+        incoming_edges: List[Node] = []
+        for n in node_a.in_edges:
+            if n.descriptor != node_b.descriptor: incoming_edges.append(n)
+        for n in node_b.in_edges:
+            if n.descriptor != node_a.descriptor: incoming_edges.append(n)
+        
+        node_a.in_edges = incoming_edges
+        
+        del self.nodes[node_b.descriptor]
+        del self.nodes[node_a.descriptor]
+
+        node_a.descriptor = new_descriptor
+        self.nodes[new_descriptor] = node_a
 
         # set node a's descriptor to be the new descriptor
         # avoid having to delete all node x -> node a and node a -> node x edges
@@ -117,7 +179,7 @@ def create_pre_nodes(reads, kmer_table, hash_length, graph):
                     prev_node = node
                 
                 else:
-                    curr_node = graph._map_to_nodes[new_kmer]
+                    curr_node = graph.nodes[new_kmer]
                     twin = graph._get_twin(curr_node)
                     graph._add_edge(prev_node, twin)
                     prev_node = curr_node
@@ -145,13 +207,22 @@ def concatenate_nodes(graph):
     # if node a has only one outgoing edge to node b and
     # node b has only one incoming edge
 
-    for (descriptor, node) in graph._map_to_nodes.items():
+    runs = [[]]
 
-        if len(graph.edges[descriptor]) == 1:
-            other_end = graph.edges[descriptor][0][1]
+    for n in graph.nodes.values():
+        print(n)
+        # print(n, n.out_edges, n.in_edges)
+        if n._has_single_out_edge():
+            other_end = n.out_edges[0]
 
-            if graph._has_single_edge(other_end):
-                print('concatenating', node, other_end)
+            if other_end._has_single_in_edge():
+                # print('concatenating', n, other_end)
+                # graph._merge_nodes(n, other_end)
+                if len(runs[-1]) == 0: runs[-1].append(n)
+                runs[-1].append(other_end)
+            else:
+                runs.append([])
 
-                graph._merge_nodes(node, other_end)
+    print(runs)
+
     return

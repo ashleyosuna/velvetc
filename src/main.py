@@ -18,8 +18,13 @@ reads = parse_and_read_file(filepath, file_format)
 kmer_table = kmer_occurrences(reads, hash_length)
 
 # 3. Build graph
-pre_nodes = graph.create_pre_nodes(reads, kmer_table, hash_length)
-print(pre_nodes)
+pre_graph = graph.Graph()
+
+graph.create_pre_nodes(reads, kmer_table, hash_length, pre_graph)
+
+graph.concatenate_nodes(pre_graph)
+
+print(pre_graph.nodes)
 
 # 3. Build roadmaps
     # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
