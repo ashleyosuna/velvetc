@@ -4,7 +4,7 @@ import sys
 """
 Functions associated with parsing input files.
 """
-def parse_and_read_file(filename, filetype="FASTA", double_strand = False, no_hash = False):
+def parse_and_read_file(filename, filetype="FASTA", double_strand = True, no_hash = False):
     if filetype in ["FASTA_GZ", "FASTQ_GZ"]:
         with gzip.open(filename, "rt") as f:
             content = f.readlines()
@@ -35,5 +35,6 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = False, no_ha
             names.append(line[1:])
         elif len(line):
             seqs.append(line)
-
-    return dict(zip(names, seqs))
+    
+    # return dict(zip(names, seqs))
+    return seqs
