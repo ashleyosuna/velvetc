@@ -16,8 +16,6 @@ class Node:
 
         self.out_edges: List[Node] = []   # adjacency list
         self.in_edges:  List[Node] = []
-
-        self.deleted = False
     
     def __repr__(self):
         return self.descriptor
