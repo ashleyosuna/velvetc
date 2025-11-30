@@ -29,6 +29,9 @@ class Node:
 
     def __eq__(self, other):
         return self.descriptor == other.descriptor
+
+    def __hash__(self):
+        return hash(self.descriptor)
     
     def __ne__(self, other):
         return self.descriptor != other.descriptor
