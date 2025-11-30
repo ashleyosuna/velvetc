@@ -9,12 +9,15 @@ class Node:
     in_edges: List[Node]
     out_edges: List[Node]
     idx: int
+    deleted: bool
 
     def __init__(self, descriptor):
         self.descriptor: str = descriptor
 
         self.out_edges: List[Node] = []   # adjacency list
         self.in_edges:  List[Node] = []
+
+        self.deleted = False
     
     def __repr__(self):
         return self.descriptor
@@ -29,13 +32,21 @@ class Node:
 
     def __eq__(self, other):
         return self.descriptor == other.descriptor
-
-    def __hash__(self):
-        return hash(self.descriptor)
     
     def __ne__(self, other):
         return self.descriptor != other.descriptor
+
+    def __hash__(self):
+        return hash(self.descriptor)
+
+    # shouldn't ever be used in practice, I just have it to satisfy heapq comparison requirement
+    def __lt__(self, other):
+        return self if self.descriptor < other.descriptor else other
     
+    # not sure what this is for, but heapq seems to need it
+    def __bool__(self):
+        return True
+
     def replace_edge(self, to_replace, new_node, incoming = True):
         if (incoming):
             new_in_edges = []
