@@ -54,15 +54,31 @@ class Node:
                 if e.dest == to_replace: e.dest = new_node 
         else:
             for e in self.out_edges: 
-                if e.dest == to_replace: e.dest = new_node 
+                if e.dest == to_replace: e.dest = new_node
+    
+    def remove_edge(self, dest, incoming = True):
+        if (incoming):
+            edges = []
+            for e in self.in_edges:
+                if e.dest != dest: edges.append(e)
+            self.in_edges = edges
+        else:
+            edges = []
+            for e in self.out_edges:
+                if e.dest != dest: edges.append(e)
+            self.out_edges = edges
+
+    def length(self, k):
+        return len(self.seq) - k + 1 
 
 
 class Graph:
-    def __init__(self):
+    def __init__(self, hash_length):
         self.next_id = 1
         self.nodes: dict[int, Node] = {}
         self.map_to_id: dict[str, int] = {}
         self.starts: List[int] = []
+        self.hash_length = hash_length
 
     def _insert_node(self, seq):
         node = Node(seq, self.next_id)
@@ -77,6 +93,9 @@ class Graph:
 
         self.next_id += 1
     
+    def length(self, node):
+        return node.length(self.hash_length)
+    
     def _get_twin(self, node_id):
         return self.nodes[-node_id]
 
@@ -85,22 +104,22 @@ class Graph:
             self.starts.append(next)
             return
         
-        if abs(prev) == abs(next):
+        # if abs(prev) == abs(next):
             # belong to the same block
             # TODO: better way to store self-loops?
             # only store self-loops as outgoing edges, so we can detect them easier later?
             # TODO: should they also be stored in the twin node?
-            idx = abs(prev)
-            node = self.nodes[idx]
-            to_next = node._has_out_edge(idx)
-            if to_next is not None: to_next._increase_multiplicity()
-            else: node.out_edges.append(Edge(idx, 1))
+            # idx = abs(prev)
+            # node = self.nodes[idx]
+            # to_next = node._has_out_edge(idx)
+            # if to_next is not None: to_next._increase_multiplicity()
+            # else: node.out_edges.append(Edge(idx, 1))
 
             # to_prev = node._has_in_edge(idx)
             # if to_prev is not None: to_prev._increase_multiplicity()
             # else: node.in_edges.append(Edge(idx, 1))
 
-            return
+            # return
         
         prev_node = self.nodes[prev]
         next_node = self.nodes[next]
@@ -135,8 +154,12 @@ class Graph:
         # and ((len(node_b.in_edges) == 1 and not node_b.self_loop()) or (len(node_b.in_edges) == 2 and node_b.self_loop()))
 
         # if we store them only as outgoing edges
-        return (len(node_a.out_edges) == 1 and node_a.out_edges[0].dest == node_b.id) and \
-                (len(node_b.in_edges) == 1)
+        # return (len(node_a.out_edges) == 1 and node_a.out_edges[0].dest == node_b.id) and \
+        #         (len(node_b.in_edges) == 1)
+        if abs(node_a.id) == abs(node_b.id): return False
+
+        return len(node_a.out_edges) == 1 and node_a.out_edges[0].dest == node_b.id and \
+            len(node_b.in_edges) == 1 and node_b.in_edges[0].dest == node_a.id
     
     def merge_nodes(self, node_a, node_b):
         seq = node_a.seq + node_b.seq[-1]
@@ -176,9 +199,53 @@ class Graph:
             dest = self.nodes[edge.dest]
             dest.replace_edge(twin_b.id, twin_a.id)
 
+        new_starts = []
+        for s in self.starts:
+            if s != node_b.id: new_starts.append(s)
+        
+        self.starts = new_starts
+
         # delete entries for node b and its twin
         del self.nodes[node_b.id]
         del self.nodes[twin_b.id]
+
+    def destroy_tip(self, node_id):
+        curr = self.nodes[node_id]
+        twin = self.nodes[-node_id]
+        prev = None
+
+        to_delete = []
+
+        while (len(curr.in_edges) == 1 and len(curr.out_edges) == 0 and len(twin.out_edges) == 1 and len(twin.in_edges) == 0) or \
+                (len(curr.out_edges) == 1 and len(curr.in_edges) == 0 and len(twin.in_edges) == 1 and len(twin.out_edges) == 0):
+            
+            twin = self.nodes[-curr.id]
+            del self.map_to_id[curr.seq]
+            del self.map_to_id[twin.seq]
+
+            to_delete.append(curr.id)
+            to_delete.append(-curr.id)
+
+            prev = curr
+            curr = self.nodes[curr.out_edges[0].dest]
+            twin = self.nodes[-curr.id]
+        
+        if prev:
+            other_end = self.nodes[prev.out_edges[0].dest]
+
+            other_end.remove_edge(prev.id)
+
+            prev_twin = self.nodes[-prev.id]
+            other_end = self.nodes[prev_twin.in_edges[0].dest]
+
+            other_end.remove_edge(prev_twin.id, False)
+        
+        filtered_start = []
+        for s in self.starts:
+            if s != node_id: filtered_start.append(s)
+        self.starts = filtered_start
+        
+        for n in to_delete: del self.nodes[n]
 
 
 def create_pre_nodes(reads, kmer_table, hash_length, graph):
@@ -272,8 +339,36 @@ def concatenate_nodes(graph):
 
 #     # if paths are very similar -> keep consensus
 
-# def clip_tips(graph):
-#     """
-#     Removes tips from the graph that are less than 2 * k in length.
-#     """
-#     return
+def clip_tips(graph):
+    """
+    Removes tips from the graph that are less than 2 * k in length.
+    """    
+    modified = True
+
+    while modified:
+        modified = False
+
+        for s in graph.starts:
+            node = graph.nodes[s]
+            twin = graph.nodes[-s]
+            length = 0
+            simple = False
+
+            while (len(node.in_edges) == 1 and len(node.out_edges) == 0 and len(twin.out_edges) == 1 and len(twin.in_edges) == 0) or \
+                (len(node.out_edges) == 1 and len(node.in_edges) == 0 and len(twin.in_edges) == 1 and len(twin.out_edges) == 0):
+                if length == 0: length += graph.length(node)
+                else: length += graph.length(node) - (graph.hash_length - 1)
+
+                node = graph.nodes[node.out_edges[0].dest]
+                twin = graph.nodes[-node.id]
+
+                simple = True
+
+            if simple and length < 2 * graph.hash_length:
+
+                graph.destroy_tip(s)
+
+                modified = True
+
+            if modified: break
+    return
