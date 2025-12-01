@@ -13,7 +13,6 @@ def tourbus(graph, source_id):
     # parent: Dict[Tuple[Node, Node], Tuple[Node, Node]]
     # discovered: Dict[Tuple[Node, Node], bool]
     # pq: List[Tuple[float, int, Tuple[Node, Node]]]
-    # multiplicities: Dict[Tuple[Node, Node], Tuple[Tuple[Node, Node], int]]
     dist: Dict[int, int]
     parent: Dict[int, int]
     discovered: Dict[int, bool]

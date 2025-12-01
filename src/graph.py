@@ -41,9 +41,6 @@ class Node:
     def __hash__(self):
         return hash(self.descriptor)
 
-    # shouldn't ever be used in practice, I just have it to satisfy heapq comparison requirement
-    def __lt__(self, other):
-        return self if self.descriptor < other.descriptor else other
     def _has_in_edge(self, dest):
         if not len(self.in_edges): return None
         
@@ -56,10 +53,6 @@ class Node:
     
     def self_loop(self):
         return self._has_out_edge(self.id)
-    
-    # not sure what this is for, but heapq seems to need it
-    def __bool__(self):
-        return True
 
     def replace_edge(self, to_replace, new_node, incoming = True):
         if (incoming):
