@@ -8,13 +8,18 @@ from graph import Node
 
 import heapq
 
-def tourbus(graph, source_id):
-    # dist: Dict[Tuple[Node, Node], int]
-    # parent: Dict[Tuple[Node, Node], Tuple[Node, Node]]
-    # discovered: Dict[Tuple[Node, Node], bool]
-    # pq: List[Tuple[float, int, Tuple[Node, Node]]]
+def backtrack_path(parent: Dict[int, Optional[int]], node_id: int) -> List[int]:
+    path = []
+    cur = node_id
+    while cur:
+        path.append(cur)
+        cur = parent[cur]
+    path.reverse
+    return path
+
+def tourbus(graph):
     dist: Dict[int, int]
-    parent: Dict[int, int]
+    parent: Dict[int, Optional[int]]
     discovered: Dict[int, bool]
     pq: List[Tuple[float, int]]
     
@@ -22,34 +27,46 @@ def tourbus(graph, source_id):
     parent = {node_id: None for node_id in graph.nodes}
     discovered = {node_id: False for node_id in graph.nodes}
 
-    dist[source_id] = 0.0
-    discovered[source_id] = True
-    pq = [(0.0, source_id)]
+    for s in graph.starts:
+        dist[s] = 0.0
+        discovered[s] = True
+        heapq.heappush(pq, (0.0, s))
 
     while pq:
-        cur_dist, u_id = heapq.heappop(pq)
-        node_obj = graph.nodes[u_id]
+        print(pq)
+        cur_dist, cur_id = heapq.heappop(pq)
+        node_obj = graph.nodes[cur_id]
+        # print(node_obj.in_edges, node_obj.out_edges)
 
-        if cur_dist > dist[u_id]: continue
+        if cur_dist > dist[cur_id]: continue
         # # if graph.nodes[node_obj].deleted: continue
 
         # explore all outgoing neighbors of current vertex
-        for edge in node_obj.in_edges:
-            dest = graph.nodes[edge.dest]
+        for edge in node_obj.out_edges:
+            dest_id = edge.dest
+            dest_node = graph.nodes[dest_id]
 
             # edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B
-            edge_weight = len(dest.seq) / edge.multiplicity
+            edge_weight = len(dest_node.seq) / edge.multiplicity
             new_dist = cur_dist + edge_weight
 
-            # if not discovered[neighbor]:
-            #     discovered[neighbor] = True
-            #     dist[neighbor] = new_dist
-            #     parent[neighbor] = u
-                # push onto heap (remember the counter tiebreaker)
-            # else:
-                # neighbor has already been discovered, so backtrack!
+            if not discovered[dest_id]:
+                discovered[dest_id] = True
+                dist[dest_id] = new_dist
+                parent[dest_id] = cur_id
+                heapq.heappush(pq, (new_dist, dest_id))
+            else:
+                # neighbor has already been discovered => potential bubble
+                # backtrack time!
+                print(f"found neighbor ", dest_node)
+                # path_cur = backtrack_path(parent, cur_id)
+                # path_dest = backtrack_path(parent, dest_id)
+
+                # lca = lca(path_cur, path_dest)
+
 
                 # decide which path to keep
+                # scoring using global alignment
 
 
     return dist
