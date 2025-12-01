@@ -18,22 +18,22 @@ def backtrack_path(parent: Dict[int, Optional[int]], node_id: int) -> List[int]:
     return path
 
 def tourbus(graph):
-    dist: Dict[int, int]
-    parent: Dict[int, Optional[int]]
-    discovered: Dict[int, bool]
-    pq: List[Tuple[float, int]]
+    dist: Dict[int, int] = {}
+    parent: Dict[int, Optional[int]] = {}
+    discovered: Dict[int, bool] = {}
+    pq: List[Tuple[float, int]] = []
     
     dist = {node_id: float('inf') for node_id in graph.nodes}
     parent = {node_id: None for node_id in graph.nodes}
     discovered = {node_id: False for node_id in graph.nodes}
 
-    for s in graph.starts:
+    start_nodes = list(graph.starts)
+    for s in start_nodes:
         dist[s] = 0.0
         discovered[s] = True
         heapq.heappush(pq, (0.0, s))
 
     while pq:
-        print(pq)
         cur_dist, cur_id = heapq.heappop(pq)
         node_obj = graph.nodes[cur_id]
         # print(node_obj.in_edges, node_obj.out_edges)

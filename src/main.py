@@ -29,9 +29,52 @@ print(pre_graph.nodes, pre_graph.starts)
 
 # no in edges or out edges?
 for n in pre_graph.nodes:
-    print(pre_graph.nodes[n], pre_graph.nodes[n].out_edges)
+    print(pre_graph.nodes[n], pre_graph.nodes[n].in_edges, pre_graph.nodes[n].out_edges)
 
 # hardcoded example
+# node_1 = graph.Node(
+#     seq = "ATC",
+#     id = 1,
+#     in_edges =
+#     out_edges = 
+# )
+# node_2 = graph.Node(
+#     seq="TCA",
+#     id=2,
+#     in_edges=
+#     out_edges=
+# )
+# node_3 = graph.Node(
+#     seq="CAA",
+#     id=3,
+#     in_edges=
+#     out_edges=
+# )
+# node_4 = graph.Node(
+#     seq="AAT",
+#     id=4,
+#     in_edges=
+#     out_edges=
+# )
+# node_5 = graph.Node(
+#     seq="TCC",
+#     id=5,
+#     in_edges=
+#     out_edges=
+# )
+# node_6 = graph.Node(
+#     seq="CCA",
+#     id=6,
+#     in_edges=
+#     out_edges=
+# )
+# node_7 = graph.Node(
+#     seq="CAA",
+#     id=7,
+#     in_edges=
+#     out_edges=
+# )
+# hardcoded_graph = graph.Graph()
 
 
 # 4. Remove bubbles using Tour Bus
