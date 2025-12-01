@@ -7,49 +7,41 @@ import graph
 from graph import Node
 
 import heapq
-import itertools
-from collections import Counter
 
-def tourbus(graph, source):
+def tourbus(graph, source_id):
     # dist: Dict[Tuple[Node, Node], int]
     # parent: Dict[Tuple[Node, Node], Tuple[Node, Node]]
     # discovered: Dict[Tuple[Node, Node], bool]
     # pq: List[Tuple[float, int, Tuple[Node, Node]]]
     # multiplicities: Dict[Tuple[Node, Node], Tuple[Tuple[Node, Node], int]]
-    dist: Dict[Node, int]
-    parent: Dict[Node, Node]
-    discovered: Dict[Node, bool]
-    pq: List[Tuple[float, int, Node]]
-    multiplicities: Dict[Node, Tuple[Node, int]]
+    dist: Dict[int, int]
+    parent: Dict[int, int]
+    discovered: Dict[int, bool]
+    pq: List[Tuple[float, int]]
     
-    dist = {node[0]: float('inf') for node in graph.nodes}
-    parent = {node[0]: None for node in graph.nodes}
-    discovered = {node[0]: False for node in graph.nodes}
+    dist = {node_id: float('inf') for node_id in graph.nodes}
+    parent = {node_id: None for node_id in graph.nodes}
+    discovered = {node_id: False for node_id in graph.nodes}
 
-    dist[source[0]] = 0.0
-    discovered[source[0]] = True
-
-    # for use as tiebreaker in priority queue
-    tie_counter = itertools.count()
-    pq = [(0.0, next(tie_counter), source[0])]
+    dist[source_id] = 0.0
+    discovered[source_id] = True
+    pq = [(0.0, source_id)]
 
     while pq:
-        cur_dist, _, u = heapq.heappop(pq)
+        cur_dist, u_id = heapq.heappop(pq)
+        node_obj = graph.nodes[u_id]
 
-        if cur_dist > dist[u]: continue
-        # if graph.nodes[u].deleted: continue
+        if cur_dist > dist[u_id]: continue
+        # # if graph.nodes[node_obj].deleted: continue
 
-        # precompute dictionary of multiplicities
-        multiplicities = dict(Counter(u.out_edges))
-        print(multiplicities)
-        # explore all neighbors (outgoing) of current vertex
-        for neighbor in multiplicities:
+        # explore all outgoing neighbors of current vertex
+        for edge in node_obj.in_edges:
+            dest = graph.nodes[edge.dest]
+
             # edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B
-            edge_weight = len(neighbor.descriptor) / multiplicities[neighbor]
+            edge_weight = len(dest.seq) / edge.multiplicity
             new_dist = cur_dist + edge_weight
 
-            # print("hello node", u)
-            # print("hey neighbor", neighbor)
             # if not discovered[neighbor]:
             #     discovered[neighbor] = True
             #     dist[neighbor] = new_dist

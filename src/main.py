@@ -27,20 +27,21 @@ graph.concatenate_nodes(pre_graph)
 
 # print(pre_graph.nodes, pre_graph.starts)
 
-for n in pre_graph.nodes:
-    print(n)
+# for n in pre_graph.nodes:
+#     print(n)
     # print(n[0].out_edges, n[0].in_edges) # does the source node not have any in edges or out edges??
 #     print(n[1].out_edges, n[1].in_edges, '\n\n')
 
 # 4. Remove bubbles using Tour Bus
-unbubbled = tourbus(pre_graph, pre_graph.nodes[1])
+first_node = next(iter(pre_graph.nodes))
+unbubbled = tourbus(pre_graph, first_node)
 print(unbubbled)
 # for n in pre_graph.nodes:
 #     print(n[0].out_edges, n[0].in_edges)
 #     print(n[1].out_edges, n[1].in_edges, '\n\n')
 
-graph.clip_tips(pre_graph)
+# graph.clip_tips(pre_graph)
 
-print(pre_graph.nodes, pre_graph.starts)
+# print(pre_graph.nodes, pre_graph.starts)
 
 # 7. Write contigs and graph stats to output file specified?
