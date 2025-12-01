@@ -3,6 +3,7 @@ from utils import settings, canonical_form
 from readSet import parse_and_read_file
 from kmerOccurrenceTable import kmer_occurrences
 import graph
+from tourbus import tourbus
 
 # getting command-line arguments
 argv = sys.argv
@@ -14,7 +15,7 @@ reads = parse_and_read_file(filepath, file_format)
 # 2. Build kmer hash table
     # For each k-mer observed in the set of reads, the hash table records the ID of the first read encountered containing that k-mer and the position of its occurrence within that read. 
     # Each k-mer is recorded simultaneously to its reverse complement. 
-
+hash_length = 5
 kmer_table = kmer_occurrences(reads, hash_length)
 
 # 3. Build graph
@@ -24,16 +25,15 @@ graph.create_pre_nodes(reads, kmer_table, hash_length, pre_graph)
 
 graph.concatenate_nodes(pre_graph)
 
-print(pre_graph.nodes, pre_graph.starts)
+# print(pre_graph.nodes, pre_graph.starts)
 
 for n in pre_graph.nodes:
-    print(n[0].out_edges, n[0].in_edges)
-    print(n[1].out_edges, n[1].in_edges, '\n\n')
+    print(n)
+    # print(n[0].out_edges, n[0].in_edges) # does the source node not have any in edges or out edges??
+#     print(n[1].out_edges, n[1].in_edges, '\n\n')
 
-# 3. Build roadmaps
-    # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
-# 4. Build second database
-    # A second database is created with the opposite information. It records, for each read, which of its original k-mers are overlapped by subsequent reads.
-# 5. Build graph
-# 6. Simplify the graph
+# 4. Remove bubbles using Tour Bus
+unbubbled = tourbus(pre_graph, pre_graph.nodes[1])
+print(unbubbled)
+
 # 7. Write contigs and graph stats to output file specified?
