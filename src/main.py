@@ -19,7 +19,7 @@ hash_length = 5
 kmer_table = kmer_occurrences(reads, hash_length)
 
 # 3. Build graph
-pre_graph = graph.Graph()
+pre_graph = graph.Graph(hash_length=hash_length)
 
 graph.create_pre_nodes(reads, kmer_table, hash_length, pre_graph)
 
@@ -35,5 +35,12 @@ for n in pre_graph.nodes:
 # 4. Remove bubbles using Tour Bus
 unbubbled = tourbus(pre_graph, pre_graph.nodes[1])
 print(unbubbled)
+# for n in pre_graph.nodes:
+#     print(n[0].out_edges, n[0].in_edges)
+#     print(n[1].out_edges, n[1].in_edges, '\n\n')
+
+graph.clip_tips(pre_graph)
+
+print(pre_graph.nodes, pre_graph.starts)
 
 # 7. Write contigs and graph stats to output file specified?
