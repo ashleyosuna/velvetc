@@ -11,22 +11,27 @@ import itertools
 from collections import Counter
 
 def tourbus(graph, source):
-    dist: Dict[Tuple[Node, Node], int]
-    parent: Dict[Tuple[Node, Node], Tuple[Node, Node]]
-    discovered: Dict[Tuple[Node, Node], bool]
-    pq: List[Tuple[float, int, Tuple[Node, Node]]]
-    multiplicities: Dict[Tuple[Node, Node], Tuple[Tuple[Node, Node], int]]
+    # dist: Dict[Tuple[Node, Node], int]
+    # parent: Dict[Tuple[Node, Node], Tuple[Node, Node]]
+    # discovered: Dict[Tuple[Node, Node], bool]
+    # pq: List[Tuple[float, int, Tuple[Node, Node]]]
+    # multiplicities: Dict[Tuple[Node, Node], Tuple[Tuple[Node, Node], int]]
+    dist: Dict[Node, int]
+    parent: Dict[Node, Node]
+    discovered: Dict[Node, bool]
+    pq: List[Tuple[float, int, Node]]
+    multiplicities: Dict[Node, Tuple[Node, int]]
     
-    dist = {node: float('inf') for node in graph.nodes}
-    parent = {node: None for node in graph.nodes}
-    discovered = {node: False for node in graph.nodes}
+    dist = {node[0]: float('inf') for node in graph.nodes}
+    parent = {node[0]: None for node in graph.nodes}
+    discovered = {node[0]: False for node in graph.nodes}
 
-    dist[source] = 0.0
-    discovered[source] = True
+    dist[source[0]] = 0.0
+    discovered[source[0]] = True
 
     # for use as tiebreaker in priority queue
     tie_counter = itertools.count()
-    pq = [(0.0, next(tie_counter), source)]
+    pq = [(0.0, next(tie_counter), source[0])]
 
     while pq:
         cur_dist, _, u = heapq.heappop(pq)
@@ -35,8 +40,8 @@ def tourbus(graph, source):
         # if graph.nodes[u].deleted: continue
 
         # precompute dictionary of multiplicities
-        multiplicities = dict(Counter(u[0].out_edges))
-
+        multiplicities = dict(Counter(u.out_edges))
+        print(multiplicities)
         # explore all neighbors (outgoing) of current vertex
         for neighbor in multiplicities:
             # edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B
