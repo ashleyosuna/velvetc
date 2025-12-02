@@ -8,14 +8,55 @@ from graph import Node
 
 import heapq
 
-def backtrack_path(parent: Dict[int, Optional[int]], node_id: int) -> List[int]:
-    path = []
-    cur = node_id
-    while cur:
-        path.append(cur)
-        cur = parent[cur]
-    path.reverse
-    return path
+# i think this is how they calculate edge weights?
+def calculate_edge_weight(dest_node, multiplicity):
+    '''edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B'''
+    return len(dest_node.seq) / multiplicity
+
+def backtrack_lca(parent: Dict[int, Optional[int]], id_node_a: int, id_node_b: int) -> Tuple[List[int], List[int]]:
+    ''' 
+    Backtracks and finds the lowest common ancestor of node_a and node_b
+    Returns both paths from lca onwards 
+    '''
+
+    path_a: List[int] = []
+    path_b: List[int] = []
+
+    cur_a: int = id_node_a
+    cur_b: int = id_node_b
+
+    ancestor: int
+    # just return the path with ancestor for now, then figure out splicing later
+    # issue: codon doesn't keep order of list?
+
+    # this seems highly inefficient, searching through list every time
+    while cur_a and cur_b:
+        if cur_a == cur_b:
+            path_a.append(cur_a)
+            path_b.append(cur_b)
+            ancestor = cur_a
+            break
+        elif cur_a in path_b:
+            path_a.append(cur_a)
+            ancestor = cur_a
+            break
+        elif cur_b in path_a:
+            path_b.append(cur_b)
+            ancestor = cur_b
+            break
+        else:
+            path_a.append(cur_a)
+            path_b.append(cur_b)
+            try:
+                cur_a = parent[cur_a]
+                cur_b = parent[cur_b]
+            except ValueError: # this means there is no lowest common ancestor -- shouldn't happen, right?
+                print("no lowest common ancestor")
+                path_a.reverse, path_b.reverse
+                return (path_a, path_b)
+
+    path_a.reverse, path_b.reverse
+    return (path_a, path_b)
 
 def tourbus(graph):
     dist: Dict[int, int] = {}
@@ -46,8 +87,7 @@ def tourbus(graph):
             dest_id = edge.dest
             dest_node = graph.nodes[dest_id]
 
-            # edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B
-            edge_weight = len(dest_node.seq) / edge.multiplicity
+            edge_weight = calculate_edge_weight(dest_node, edge.multiplicity)
             new_dist = cur_dist + edge_weight
 
             if not discovered[dest_id]:
@@ -58,12 +98,10 @@ def tourbus(graph):
             else:
                 # neighbor has already been discovered => potential bubble
                 # backtrack time!
+                print(f"cur id ", cur_id)
                 print(f"found neighbor ", dest_node)
-                # path_cur = backtrack_path(parent, cur_id)
-                # path_dest = backtrack_path(parent, dest_id)
-
-                # lca = lca(path_cur, path_dest)
-
+                path_a, path_b = backtrack_lca(parent, cur_id, dest_id)
+                print(path_a, path_b)
 
                 # decide which path to keep
                 # scoring using global alignment

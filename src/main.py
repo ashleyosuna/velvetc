@@ -15,7 +15,7 @@ reads = parse_and_read_file(filepath, file_format)
 # 2. Build kmer hash table
     # For each k-mer observed in the set of reads, the hash table records the ID of the first read encountered containing that k-mer and the position of its occurrence within that read. 
     # Each k-mer is recorded simultaneously to its reverse complement. 
-hash_length = 5
+hash_length = 3
 kmer_table = kmer_occurrences(reads, hash_length)
 
 # 3. Build graph
@@ -29,7 +29,7 @@ print(pre_graph.nodes, pre_graph.starts)
 
 # no in edges or out edges?
 for n in pre_graph.nodes:
-    print(pre_graph.nodes[n], pre_graph.nodes[n].in_edges, pre_graph.nodes[n].out_edges)
+    print(pre_graph.nodes[n].in_edges, pre_graph.nodes[n], pre_graph.nodes[n].out_edges)
 
 # hardcoded example
 # node_1 = graph.Node(
@@ -83,8 +83,9 @@ for n in pre_graph.nodes:
 #     print(node_id, node.out_edges)
 # print(pre_graph.nodes)
 
-# unbubbled = tourbus(pre_graph)
-# print(unbubbled)
+print('\n\n')
+unbubbled = tourbus(pre_graph)
+print(unbubbled)
 # for n in pre_graph.nodes:
 #     print(n[0].out_edges, n[0].in_edges)
 #     print(n[1].out_edges, n[1].in_edges, '\n\n')
