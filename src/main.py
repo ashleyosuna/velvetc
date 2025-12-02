@@ -28,8 +28,8 @@ graph.concatenate_nodes(pre_graph)
 
 print(pre_graph.nodes, pre_graph.starts)
 
-# for n in pre_graph.nodes:
-#     print(pre_graph.nodes[n].in_edges, pre_graph.nodes[n], pre_graph.nodes[n].out_edges)
+for n in pre_graph.nodes:
+    print(pre_graph.nodes[n].in_edges, pre_graph.nodes[n], pre_graph.nodes[n].out_edges)
 
 # 4. Remove bubbles using Tour Bus
 unbubbled = tourbus(pre_graph)

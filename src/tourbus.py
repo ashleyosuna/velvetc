@@ -133,6 +133,7 @@ def tourbus(graph):
                     continue
                 
                 # bubble => concatenate sequences into strings
+                path_a.append(dest_id) # add the overlapping already-discovered node
                 path_a_seqs = [graph.nodes[id_a].seq for id_a in path_a]
                 path_b_seqs = [graph.nodes[id_b].seq for id_b in path_b]
                 path_a_str = concatenate_path(path_a_seqs)
