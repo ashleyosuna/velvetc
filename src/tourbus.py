@@ -138,7 +138,7 @@ def tourbus(graph):
                 path_a_str = concatenate_path(path_a_seqs)
                 path_b_str = concatenate_path(path_b_seqs)
                
-                print(path_a_str, path_b_str)
+                print("bubble: ", path_a_str, path_b_str)
 
                 # decide which path to keep
                 # scoring using global alignment
