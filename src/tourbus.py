@@ -13,6 +13,26 @@ def calculate_edge_weight(dest_node, multiplicity):
     '''edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B'''
     return len(dest_node.seq) / multiplicity
 
+# probably bad and inefficient
+def max_overlap(a: str, b: str) -> int:
+    """
+    Returns length of longest suffix of 'a' that matches a prefix of 'b'
+    """
+    max_overlap = min(len(a), len(b))
+    for l in range(max_overlap, 0, -1):
+        if a[-l:] == b[:l]:
+            return l
+    return 0
+
+def concatenate_path(path: List[str]):
+    result: str = path[0]
+
+    for seq in path[1:]:
+        overlap_len = max_overlap(result, seq)
+        result += seq[overlap_len:]
+    
+    return result
+
 def backtrack_lca(parent: Dict[int, Optional[int]], 
                   id_node_a: int, id_node_b: int) -> Tuple[List[int], List[int]]:
     ''' 
@@ -44,8 +64,8 @@ def backtrack_lca(parent: Dict[int, Optional[int]],
         except ValueError:
             break
 
-    if ancestor == 0: # should never happen
-        print("no ancestor")
+    if ancestor == 0: # not a bubble
+        # print("no ancestor")
         return ([], [])
 
     # build path A: from ancestor to node_a
@@ -108,10 +128,18 @@ def tourbus(graph):
             else:
                 # neighbor has already been discovered => potential bubble
                 # backtrack time!
-                print(f"cur id ", cur_id)
-                print(f"found neighbor ", dest_node)
                 path_a, path_b = backtrack_lca(parent, cur_id, dest_id)
-                print(path_a, path_b)
+                
+                if path_a == []: # not a bubble
+                    continue
+                
+                # bubble => concatenate sequences into strings
+                path_a_seqs = [graph.nodes[id_a].seq for id_a in path_a]
+                path_b_seqs = [graph.nodes[id_b].seq for id_b in path_b]
+                path_a_str = concatenate_path(path_a_seqs)
+                path_b_str = concatenate_path(path_b_seqs)
+               
+                print(path_a_str, path_b_str)
 
                 # decide which path to keep
                 # scoring using global alignment

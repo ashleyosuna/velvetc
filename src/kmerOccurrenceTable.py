@@ -2,7 +2,7 @@ from typing import Dict, Tuple
 from utils import canonical_form, reverse_complement
 from collections import defaultdict
 
-def kmer_occurrences(reads, k):
+def kmer_occurrences(reads, k, do_canonical):
     kmer_table = defaultdict(list)
 
     for i in range(len(reads)):
@@ -14,7 +14,10 @@ def kmer_occurrences(reads, k):
             # slide window to include new nucleotide if not initial window
             if j >= k: kmer = kmer[1:] + seq[j]
 
-            canonical_kmer, dir = canonical_form(kmer)
-            kmer_table[canonical_kmer].append((i, dir, j - k + 1)) 
+            if do_canonical:
+                canonical_kmer, dir = canonical_form(kmer)
+                kmer_table[canonical_kmer].append((i, dir, j - k + 1))
+            else:
+                kmer_table[kmer].append((i, 1, j - k + 1))
 
     return kmer_table

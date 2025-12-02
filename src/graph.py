@@ -85,7 +85,7 @@ class Graph:
         self.map_to_id: dict[str, int] = {}
         self.starts: List[int] = []
         self.hash_length = hash_length
-        self.enable_twin = True # for debugging
+        self.enable_twin = False # for debugging
 
     def _insert_node(self, seq):
         node = Node(seq, self.next_id)
@@ -278,7 +278,11 @@ def create_pre_nodes(reads, kmer_table, hash_length, graph):
             # if not in initial kmer, slide kmer window
             if end >= hash_length: new_kmer = new_kmer[1:] + seq[end]
             
-            can_kmer, dir = canonical_form(new_kmer)
+            if graph.enable_twin:
+                can_kmer, dir = canonical_form(new_kmer)
+            else:
+                can_kmer = new_kmer
+                dir = 1
             first_occurrence = kmer_table[can_kmer][0]
 
             # if newly added kmer to the window overlaps with other reads
