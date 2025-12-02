@@ -13,49 +13,59 @@ def calculate_edge_weight(dest_node, multiplicity):
     '''edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B'''
     return len(dest_node.seq) / multiplicity
 
-def backtrack_lca(parent: Dict[int, Optional[int]], id_node_a: int, id_node_b: int) -> Tuple[List[int], List[int]]:
+def backtrack_lca(parent: Dict[int, Optional[int]], 
+                  id_node_a: int, id_node_b: int) -> Tuple[List[int], List[int]]:
     ''' 
     Backtracks and finds the lowest common ancestor of node_a and node_b
     Returns both paths from lca onwards 
     '''
 
+    ancestor: int = 0 # there is no node 0
+
+    # collect all ancestors of A
+    ancestors_a = set()
+    cur = id_node_a
+    while cur is not None:
+        ancestors_a.add(cur)
+        try:
+            cur = parent[cur]
+        except ValueError:
+            # no more parents, cur = None
+            break
+
+    # walk B upward until LCA is found
+    cur = id_node_b
+    while cur is not None:
+        if cur in ancestors_a:
+            ancestor = cur
+            break
+        try:
+            cur = parent[cur]
+        except ValueError:
+            break
+
+    if ancestor == 0: # should never happen
+        print("no ancestor")
+        return ([], [])
+
+    # build path A: from ancestor to node_a
     path_a: List[int] = []
+    cur = id_node_a
+    while cur != ancestor:
+        path_a.append(cur)
+        cur = parent[cur]
+    path_a.append(ancestor)
+    path_a.reverse()
+
+    # build path B: from ancestor to node_b
     path_b: List[int] = []
+    cur = id_node_b
+    while cur != ancestor:
+        path_b.append(cur)
+        cur = parent[cur]
+    path_b.append(ancestor)
+    path_b.reverse()
 
-    cur_a: int = id_node_a
-    cur_b: int = id_node_b
-
-    ancestor: int
-    # just return the path with ancestor for now, then figure out splicing later
-    # issue: codon doesn't keep order of list?
-
-    # this seems highly inefficient, searching through list every time
-    while cur_a and cur_b:
-        if cur_a == cur_b:
-            path_a.append(cur_a)
-            path_b.append(cur_b)
-            ancestor = cur_a
-            break
-        elif cur_a in path_b:
-            path_a.append(cur_a)
-            ancestor = cur_a
-            break
-        elif cur_b in path_a:
-            path_b.append(cur_b)
-            ancestor = cur_b
-            break
-        else:
-            path_a.append(cur_a)
-            path_b.append(cur_b)
-            try:
-                cur_a = parent[cur_a]
-                cur_b = parent[cur_b]
-            except ValueError: # this means there is no lowest common ancestor -- shouldn't happen, right?
-                print("no lowest common ancestor")
-                path_a.reverse, path_b.reverse
-                return (path_a, path_b)
-
-    path_a.reverse, path_b.reverse
     return (path_a, path_b)
 
 def tourbus(graph):

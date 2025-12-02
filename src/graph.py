@@ -85,17 +85,20 @@ class Graph:
         self.map_to_id: dict[str, int] = {}
         self.starts: List[int] = []
         self.hash_length = hash_length
+        self.enable_twin = True # for debugging
 
     def _insert_node(self, seq):
         node = Node(seq, self.next_id)
         rc = reverse_complement(node.seq)
-        twin = Node(rc, -self.next_id)
 
         self.map_to_id[node.seq] = self.next_id
-        self.map_to_id[twin.seq] = -self.next_id
 
         self.nodes[self.next_id] = node
-        self.nodes[-self.next_id] = twin
+
+        if self.enable_twin:
+            twin = Node(rc, -self.next_id)
+            self.map_to_id[twin.seq] = -self.next_id
+            self.nodes[-self.next_id] = twin
 
         self.next_id += 1
     
@@ -130,9 +133,6 @@ class Graph:
         prev_node = self.nodes[prev]
         next_node = self.nodes[next]
 
-        prev_twin = self._get_twin(prev)
-        next_twin = self._get_twin(next)
-
         to_next = prev_node._has_out_edge(next)
         if to_next is not None: to_next._increase_multiplicity()
         else: prev_node.out_edges.append(Edge(next, 1))
@@ -140,15 +140,19 @@ class Graph:
         to_prev = next_node._has_in_edge(prev)
         if to_prev is not None: to_prev._increase_multiplicity()
         else: next_node.in_edges.append(Edge(prev, 1))
-        
-        # connect twin nodes
-        to_next = prev_twin._has_in_edge(-next)
-        if to_next is not None: to_next._increase_multiplicity()
-        else: prev_twin.in_edges.append(Edge(-next, 1))
 
-        to_prev = next_twin._has_out_edge(-prev)
-        if to_prev is not None: to_prev._increase_multiplicity()
-        else: next_twin.out_edges.append(Edge(-prev, 1))
+        if self.enable_twin:
+            prev_twin = self._get_twin(prev)
+            next_twin = self._get_twin(next)
+
+            # connect twin nodes
+            to_next = prev_twin._has_in_edge(-next)
+            if to_next is not None: to_next._increase_multiplicity()
+            else: prev_twin.in_edges.append(Edge(-next, 1))
+
+            to_prev = next_twin._has_out_edge(-prev)
+            if to_prev is not None: to_prev._increase_multiplicity()
+            else: next_twin.out_edges.append(Edge(-prev, 1))
 
     def get_node_count(self):
         return self.next_id - 1
@@ -187,23 +191,25 @@ class Graph:
             dest = self.nodes[edge.dest]
             dest.replace_edge(node_b.id, node_a.id, False)
 
-        # repeat for twin nodes
-        twin_a = self._get_twin(node_a.id)
-        twin_a.seq = reverse_complement(seq)
-        twin_b = self._get_twin(node_b.id)
 
-        twin_a.in_edges = twin_b.in_edges
-        for edge in twin_b.in_edges:
-            dest = self.nodes[edge.dest]
-            dest.replace_edge(twin_b.id, twin_a.id, False)
-        
-        for edge in twin_b.out_edges:
-            # twin_a.out_edges.append(edge)
-            e = twin_a._has_out_edge(edge.dest)
-            if e: e.multiplicity += edge.multiplicity
-            else: twin_a.out_edges.append(edge)
-            dest = self.nodes[edge.dest]
-            dest.replace_edge(twin_b.id, twin_a.id)
+        if self.enable_twin:
+            # repeat for twin nodes
+            twin_a = self._get_twin(node_a.id)
+            twin_a.seq = reverse_complement(seq)
+            twin_b = self._get_twin(node_b.id)
+
+            twin_a.in_edges = twin_b.in_edges
+            for edge in twin_b.in_edges:
+                dest = self.nodes[edge.dest]
+                dest.replace_edge(twin_b.id, twin_a.id, False)
+            
+            for edge in twin_b.out_edges:
+                # twin_a.out_edges.append(edge)
+                e = twin_a._has_out_edge(edge.dest)
+                if e: e.multiplicity += edge.multiplicity
+                else: twin_a.out_edges.append(edge)
+                dest = self.nodes[edge.dest]
+                dest.replace_edge(twin_b.id, twin_a.id)
 
         new_starts = []
         for s in self.starts:
@@ -213,7 +219,8 @@ class Graph:
 
         # delete entries for node b and its twin
         del self.nodes[node_b.id]
-        del self.nodes[twin_b.id]
+        if self.enable_twin:
+            del self.nodes[twin_b.id]
 
     def destroy_tip(self, node_id):
         curr = self.nodes[node_id]
@@ -292,6 +299,10 @@ def create_pre_nodes(reads, kmer_table, hash_length, graph):
                     prev_node = curr_node
                 
                 else:
+                    if new_kmer not in graph.map_to_id:
+                        print("Missing kmer:", new_kmer, " (twin disabled?)")
+                        continue
+
                     curr_node = graph.map_to_id[new_kmer]
                     graph._add_edge(prev_node, curr_node)
                     prev_node = curr_node
