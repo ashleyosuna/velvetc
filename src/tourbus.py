@@ -1,19 +1,18 @@
 # Bubble removal using Tourbus algorithm
 
 # current state: figuring out what to do about twin nodes (reverse direction)
-# should they still be separated or can they count as one node now?
 
 import graph
 from graph import Node
 
 import heapq
 
-# i think this is how they calculate edge weights?
+# i believe this is how they calculate edge weights
 def calculate_edge_weight(dest_node, multiplicity):
     '''edge cost is the length of s(B) divided by the multiplicity of the arc leading from A to B'''
     return len(dest_node.seq) / multiplicity
 
-# probably bad and inefficient
+# probably could be made more efficient
 def max_overlap(a: str, b: str) -> int:
     """
     Returns length of longest suffix of 'a' that matches a prefix of 'b'

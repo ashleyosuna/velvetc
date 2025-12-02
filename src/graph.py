@@ -85,7 +85,7 @@ class Graph:
         self.map_to_id: dict[str, int] = {}
         self.starts: List[int] = []
         self.hash_length = hash_length
-        self.enable_twin = False # for debugging
+        self.enable_twin = True # for debugging
 
     def _insert_node(self, seq):
         node = Node(seq, self.next_id)
