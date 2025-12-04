@@ -19,13 +19,21 @@ graph = Graph(hash_length)
 
 graph.create_init_nodes(kmers)
 
+print("Initial nodes", graph.node_count)
+
 graph.map_through_reads(reads)
 
 graph.concatenate_nodes()
 
+print("After initial concatenation", graph.node_count)
+
 graph.clip_tips()
 
+print("After clipping tips", graph.node_count)
+
 tourbus(graph)
+
+print("After running tourbus", graph.node_count)
 
 graph.concatenate_nodes()
 
