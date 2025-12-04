@@ -27,7 +27,6 @@ print("Initial nodes", graph.node_count)
 
 graph.map_through_reads(reads)
 
-graph.concatenate_nodes()
 
 print("After initial concatenation", graph.node_count)
 
@@ -35,19 +34,32 @@ graph.clip_tips()
 
 print("After clipping tips", graph.node_count)
 
+graph.concatenate_nodes()
+
+graph.clip_tips()
+
+graph.concatenate_nodes()
+
 tourbus(graph)
 
 print("After running tourbus", graph.node_count)
 
 graph.concatenate_nodes()
-
 print("After concatenating", graph.node_count)
+
+graph.clip_tips()
+
+# remove low coverage nodes?
+
+# graph.concatenate_nodes()
+# graph.clip_tips()
+# graph.concatenate_nodes()
 
 contigs = graph.get_contigs()
 
 n50_len, max_len = n50(contigs, hash_length)
 
-print(f"Final graph has {g.node_count} nodes and n50 of {n50_len}, max {max_len}")
+print(f"Final graph has {graph.node_count} nodes and n50 of {n50_len}, max {max_len}")
 
 # output nodes to file
 output_contigs(output_file, contigs)
