@@ -28,4 +28,4 @@ jobs:
       - name: Running e-coli experiment
         run: |
           PATH=${PATH}:${HOME}/.codon/bin
-          codon run -release src/main.py test ./tests/ecoli_50x.fq k=31 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_50x.fq k=31 filetype=FASTQ
