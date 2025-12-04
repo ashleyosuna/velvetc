@@ -140,6 +140,7 @@ def tourbus(graph):
 
                 if similar:
                     # print("bubble resolution", path_a_str, path_b_str)
+                    print("bubble found")
                     graph.merge_paths(path_a, path_b)
 
     return dist
