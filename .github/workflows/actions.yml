@@ -25,6 +25,14 @@ jobs:
           pip install find_libpython
           export CODON_PYTHON=$(find_libpython)
           echo "Found Python at: ${CODON_PYTHON}"
+      - uses: conda-incubator/setup-miniconda@v3
+      - name: Installing velvet
+        shell: bash -l {0}
+        run: conda install bioconda::velvet
+      - name: Running e-coli experiment (velvet)
+        run: |
+          velveth velvet_test 31 -fastq src/tests/ecoli_50x.fq src/tests/ecoli_50x.fq
+          velvetg velvet_test -cov_cutoff 0
       - name: Running e-coli experiment
         run: |
           set -euxo pipefail
