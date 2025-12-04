@@ -264,12 +264,11 @@ class Graph:
         return
     
     def clip_tips(self):
-        start_points = self.starts
         modified = True
 
         while modified:
             modified = False
-            for s in start_points:
+            for s in self.starts:
                 curr_node = self.nodes[s]
 
                 tip = []
@@ -289,6 +288,7 @@ class Graph:
                 if modified: break
             
             # if modified: start_points = start_points[1:]        
+        
         return
     
     def merge_nodes(self, node_a, node_b):
