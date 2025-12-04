@@ -13,6 +13,8 @@ output_file, filepath, hash_length, file_format, read_type = settings(argv[1:])
 # Read input file (focus on FASTA/FASQ files)
 reads = parse_and_read_file(filepath, file_format)
 
+print(f"{len(reads)} reads found")
+
 kmers = kmer_occurrences(reads, hash_length)
 
 print(len(kmers), "kmers found")
