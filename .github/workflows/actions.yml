@@ -27,5 +27,6 @@ jobs:
           echo "Found Python at: ${CODON_PYTHON}"
       - name: Running e-coli experiment
         run: |
+          set -euxo pipefail
           PATH=${PATH}:${HOME}/.codon/bin
           codon run -release src/main.py test src/tests/ecoli_50x.fq k=31 filetype=FASTQ
