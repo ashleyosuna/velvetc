@@ -32,10 +32,34 @@ jobs:
       - name: Running e-coli experiment (velvet)
         shell: bash -l {0}
         run: |
-          velveth velvet_test 21 -fastq src/tests/ecoli_3x_100k_region.fq
-          velvetg velvet_test -cov_cutoff 0
+          velveth velvet_test1 21 -fastq src/tests/ecoli_3x_10k_region.fq
+          velvetg velvet_test1 -cov_cutoff 0
+
+          velveth velvet_test2 21 -fastq src/tests/ecoli_3x_25k_region.fq
+          velvetg velvet_test2 -cov_cutoff 0
+
+          velveth velvet_test3 21 -fastq src/tests/ecoli_3x_50k_region.fq
+          velvetg velvet_test3 -cov_cutoff 0
+
+          velveth velvet_test4 21 -fastq src/tests/ecoli_3x_75k_region.fq
+          velvetg velvet_test4 -cov_cutoff 0
+
+          velveth velvet_test5 21 -fastq src/tests/ecoli_3x_100k_region.fq
+          velvetg velvet_test5 -cov_cutoff 0
+
+          velveth velvet_test6 21 -fastq src/tests/ecoli_3x_125k_region.fq
+          velvetg velvet_test6 -cov_cutoff 0
+
+          velveth velvet_test7 21 -fastq src/tests/ecoli_3x_150k_region.fq
+          velvetg velvet_test7 -cov_cutoff 0
       - name: Running e-coli experiment (our implementation)
         run: |
           set -euxo pipefail
           PATH=${PATH}:${HOME}/.codon/bin
+          codon run -release src/main.py test src/tests/ecoli_3x_10k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_25k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_50k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_75k_region.fq k=21 filetype=FASTQ
           codon run -release src/main.py test src/tests/ecoli_3x_100k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_125k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_150k_region.fq k=21 filetype=FASTQ
