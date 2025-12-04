@@ -1,6 +1,5 @@
 from typing import Dict, Tuple
 from utils import canonical_form, reverse_complement
-from collections import defaultdict
 
 def kmer_occurrences(reads, k):
     kmers = set()

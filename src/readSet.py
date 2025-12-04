@@ -1,6 +1,10 @@
 import gzip
 import sys
 
+"""
+Functions associated with parsing input files.
+"""
+
 def read_fastq(lines):
     i = 0
     seqs = []
@@ -14,9 +18,6 @@ def read_fastq(lines):
 
     return seqs
 
-"""
-Functions associated with parsing input files.
-"""
 def parse_and_read_file(filename, filetype="FASTA"):
     if filetype in ["FASTA_GZ", "FASTQ_GZ"]:
         with gzip.open(filename, "rt") as f:
@@ -53,3 +54,15 @@ def parse_and_read_file(filename, filetype="FASTA"):
     
     # return dict(zip(names, seqs))
     return seqs
+
+def output_contigs(filename, contigs):
+    with open(f"{filename}.txt", "w") as f:
+        lines = []
+
+        for contig in contigs:
+            line = f"{contig}\n"
+            lines.append(line)
+
+        f.writelines(lines)
+    
+    return

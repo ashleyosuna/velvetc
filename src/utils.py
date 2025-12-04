@@ -54,7 +54,7 @@ def settings(args):
         print("The following arguments must be provided: output_dir and filepath.")
         sys.exit(0)
     
-    output_dir = args[0]
+    output_file = args[0]
     filepath = args[1]
 
     # setting default options
@@ -74,7 +74,7 @@ def settings(args):
     # value for k should be odd, if even it is decremented
     if k % 2 == 0: k -= 1
 
-    return output_dir, filepath, k, filetype, read_type
+    return output_file, filepath, k, filetype, read_type
 
 def n50(seqs, k):
     sorted_list = sorted(seqs, len)

@@ -1,5 +1,5 @@
 import sys
-from readSet import parse_and_read_file
+from readSet import parse_and_read_file, output_contigs
 from utils import settings
 from kmerOccurrences import kmer_occurrences
 from graph import Graph
@@ -8,7 +8,7 @@ from utils import n50
 
 # getting command-line arguments
 argv = sys.argv
-output_dir, filepath, hash_length, file_format, read_type = settings(argv[1:])
+output_file, filepath, hash_length, file_format, read_type = settings(argv[1:])
 
 # Read input file (focus on FASTA/FASQ files)
 reads = parse_and_read_file(filepath, file_format)
@@ -46,3 +46,4 @@ print(contigs)
 print(n50(contigs, hash_length))
 
 # output nodes to file
+output_contigs(output_file, contigs)
