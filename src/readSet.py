@@ -10,7 +10,7 @@ def read_fastq(lines):
 
         seq = lines[i+1].strip()
         seqs.append(seq)
-        i += 2
+        i += 4
 
     return seqs
 
