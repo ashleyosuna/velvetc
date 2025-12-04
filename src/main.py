@@ -27,13 +27,6 @@ print("Initial nodes", graph.node_count)
 
 graph.map_through_reads(reads)
 
-
-# print("After initial concatenation", graph.node_count)
-
-# graph.clip_tips()
-
-print("After clipping tips", graph.node_count)
-
 graph.concatenate_nodes()
 
 graph.clip_tips()
@@ -45,15 +38,18 @@ tourbus(graph)
 print("After running tourbus", graph.node_count)
 
 graph.concatenate_nodes()
+
 print("After concatenating", graph.node_count)
 
 graph.clip_tips()
 
+print("After clipping tips", graph.node_count)
+
 # remove low coverage nodes?
 
-# graph.concatenate_nodes()
-# graph.clip_tips()
-# graph.concatenate_nodes()
+graph.concatenate_nodes()
+
+print("After final concatenation", graph.node_count)
 
 contigs = graph.get_contigs()
 
