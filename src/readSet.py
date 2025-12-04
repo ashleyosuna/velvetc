@@ -55,12 +55,12 @@ def parse_and_read_file(filename, filetype="FASTA"):
     # return dict(zip(names, seqs))
     return seqs
 
-def output_contigs(filename, contigs):
+def output_contigs(filename, contigs, k):
     with open(f"{filename}.txt", "w") as f:
         lines = """"""
 
-        for contig in contigs:
-            line = f"{contig}\n"
+        for id, seq in contigs.items():
+            line = f">NODE {id}; length {len(seq) - k + 1}\n{seq}\n"
             lines += line
 
         f.write(lines)

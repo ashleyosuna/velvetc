@@ -360,9 +360,10 @@ class Graph:
         """
         Outputs long nodes in the graph.
         """
-        contigs = []
+        contigs = {}
         for id, node in self.nodes.items():
             if id < 0 or node.length(self.k) < self.k:
                 continue
-            contigs.append(node.seq)
+            # contigs.append(node.seq)
+            contigs[node.id] = node.seq
         return contigs
