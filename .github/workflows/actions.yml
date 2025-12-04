@@ -32,6 +32,7 @@ jobs:
       - name: Running e-coli experiment (velvet)
         shell: bash -l {0}
         run: |
+          set -euxo pipefail
           velveth velvet_test1 21 -fastq src/tests/ecoli_3x_10k_region.fq
           velvetg velvet_test1 -cov_cutoff 0
 
