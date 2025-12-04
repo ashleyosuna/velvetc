@@ -37,6 +37,8 @@ print("After running tourbus", graph.node_count)
 
 graph.concatenate_nodes()
 
+print("After concatenating", graph.node_count)
+
 contigs = graph.get_contigs()
 
 print(contigs)
