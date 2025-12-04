@@ -3,7 +3,7 @@ from utils import canonical_form, reverse_complement
 from collections import defaultdict
 
 def kmer_occurrences(reads, k):
-    kmer_table = defaultdict(list)
+    kmers = set()
 
     for i in range(len(reads)):
         seq = reads[i]
@@ -15,6 +15,7 @@ def kmer_occurrences(reads, k):
             if j >= k: kmer = kmer[1:] + seq[j]
 
             canonical_kmer, dir = canonical_form(kmer)
-            kmer_table[canonical_kmer].append((i, dir, j - k + 1)) 
+            # kmer_table[canonical_kmer].append((i, dir, j - k + 1)) 
+            kmers.add(canonical_kmer)
 
-    return kmer_table
+    return list(kmers)

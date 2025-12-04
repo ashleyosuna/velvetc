@@ -1,374 +1,368 @@
-from utils import canonical_form, reverse_complement
-from typing import List, Tuple, Dict, Set
-from collections import defaultdict
-
-class Edge:
-    dest: int
-    multiplicity: int
-
-    def __init__(self, dest):
-        self.dest = dest
-        self.multiplicity = 1
-
-    def _increase_multiplicity(self):
-        self.multiplicity += 1
-    
-    def __repr__(self):
-        return f"-> ({self.dest}, {self.multiplicity})"
+from utils import reverse_complement
+from typing import List
+import numpy as np
 
 class Node:
     seq: str
     id: int
-    in_edges: List[Edge]
-    out_edges: List[Edge]
+    in_edges: dict[int, int]
+    out_edges: dict[int, int]
 
     def __init__(self, seq, id):
         self.seq = seq
         self.id = id
-        self.in_edges = List()
-        self.out_edges = List()
-
-    def _has_out_edge(self, dest):
-        if not len(self.out_edges): return None
-        
-        for edge in self.out_edges:
-            if edge.dest == dest: return edge
-        return None
-    
-    def _has_in_edge(self, dest):
-        if not len(self.in_edges): return None
-        
-        for edge in self.in_edges:
-            if edge.dest == dest: return edge
-        return None
+        self.in_edges = {}
+        self.out_edges = {}
     
     def __repr__(self):
-        return self.seq
+        return f"{self.seq}"
     
-    def self_loop(self):
-        return self._has_out_edge(self.id)
-    
-    def replace_edge(self, to_replace, new_node, incoming = True):
-        if (incoming):
-            for e in self.in_edges:
-                if e.dest == to_replace: e.dest = new_node 
+    def add_incoming_edge(self, from_node, multiplicity):
+        if self.in_edges.get(from_node, -1) == -1:
+            self.in_edges[from_node] = multiplicity
         else:
-            for e in self.out_edges: 
-                if e.dest == to_replace: e.dest = new_node
+            self.in_edges[from_node] += multiplicity
     
-    def remove_edge(self, dest, incoming = True):
-        if (incoming):
-            edges = []
-            for e in self.in_edges:
-                if e.dest != dest: edges.append(e)
-            self.in_edges = edges
+    def add_outgoing_edge(self, to_node, multiplicity):
+        if self.out_edges.get(to_node, -1) == -1:
+            self.out_edges[to_node] = multiplicity
         else:
-            edges = []
-            for e in self.out_edges:
-                if e.dest != dest: edges.append(e)
-            self.out_edges = edges
+            self.out_edges[to_node] += multiplicity
 
+    def simple_edge(self):
+        if len(self.out_edges) > 1: return False
+
+        if len(self.out_edges) == 0:
+            # print("shouldn't get here")
+            return False
+        
+        other_end = list(self.out_edges.keys())[0]
+        return abs(other_end) != abs(self.id)
+    
     def length(self, k):
-        return len(self.seq) - k + 1 
+        # return number of kmers
+        return len(self.seq) - k + 1
+    
+    def compare(self, other):
+        """
+        Simple comparison of nodes; if more than 50% of bases match then return True,
+        otherwise nodes are not considered similar enough.
+        """
+        u = self.seq
+        v = other.seq
 
+        n, m = len(u) + 1, len(v) + 1
+        network = np.full((n, m), 0, dtype=float)
+
+        # fill first row
+        for i in range(n): network[i][0] = 0 * i
+
+        # fill first column
+        for j in range(m): network[0][j] = 0 * j
+
+        # fill matrix row by row
+        for i in range(1, n):
+            for j in range(1, m):
+                network[i][j] = max(
+                    network[i-1][j],
+                    network[i][j-1],
+                    network[i-1][j-1] + (1 if u[i-1] == v[j-1] else 0)
+                )
+
+        score = network[i-1][j-1]
+
+        if score > max(len(u), len(v)) / 2: return True
+        return False
 
 class Graph:
-    def __init__(self, hash_length):
-        self.next_id = 1
+    def __init__(self, k):
+        self.k: int = k
         self.nodes: dict[int, Node] = {}
-        self.map_to_id: dict[str, int] = {}
+        self.map_to_nodes: dict[str, int] = {}
         self.starts: List[int] = []
-        self.hash_length = hash_length
 
-    def _insert_node(self, seq):
-        node = Node(seq, self.next_id)
-        rc = reverse_complement(node.seq)
-        twin = Node(rc, -self.next_id)
+    @property
+    def node_count(self):
+        return len(self.nodes) / 2
 
-        self.map_to_id[node.seq] = self.next_id
-        self.map_to_id[twin.seq] = -self.next_id
+    def create_init_nodes(self, kmers):
+        """
+        Creates initial nodes and their twins as given by the canonical kmers.
+        """
+        next_id = 1
+        
+        for kmer in kmers:
+            # creating canonical node
+            self.nodes[next_id] = Node(kmer, next_id)
+            self.map_to_nodes[kmer] = next_id
 
-        self.nodes[self.next_id] = node
-        self.nodes[-self.next_id] = twin
+            # creating twin node
+            rc = reverse_complement(kmer)
+            self.nodes[-next_id] = Node(rc, -next_id)
+            self.map_to_nodes[rc] = -next_id
+            
+            next_id += 1
 
-        self.next_id += 1
+    def add_edge(self, node_a, node_b):
+        # add outgoing edge to b into node a
+        node_a.add_outgoing_edge(node_b.id, 1)
+
+        # add incoming edge from a into b
+        node_b.add_incoming_edge(node_a.id, 1)
+        
+        twin_a = self.nodes[-node_a.id]
+        twin_b = self.nodes[-node_b.id]
+
+        # add outgoing edge to a's twin into b's twin
+        twin_b.add_outgoing_edge(twin_a.id, 1)
+        
+        # add incoming edge from b's twin into a
+        twin_a.add_incoming_edge(twin_b.id, 1)
     
-    def length(self, node):
-        return node.length(self.hash_length)
-    
-    def _get_twin(self, node_id):
-        return self.nodes[-node_id]
-
-    def _add_edge(self, prev, next):
-        if prev == 0:
-            self.starts.append(next)
-            return
+    def map_through_reads(self, reads):
+        """
+        Goes through the reads and adds edges between corresponding nodes.
+        """
+        k = self.k
         
-        # if abs(prev) == abs(next):
-            # belong to the same block
-            # TODO: better way to store self-loops?
-            # only store self-loops as outgoing edges, so we can detect them easier later?
-            # TODO: should they also be stored in the twin node?
-            # idx = abs(prev)
-            # node = self.nodes[idx]
-            # to_next = node._has_out_edge(idx)
-            # if to_next is not None: to_next._increase_multiplicity()
-            # else: node.out_edges.append(Edge(idx, 1))
+        for read in reads:
+            if len(read) <= k: continue
 
-            # to_prev = node._has_in_edge(idx)
-            # if to_prev is not None: to_prev._increase_multiplicity()
-            # else: node.in_edges.append(Edge(idx, 1))
+            prev_kmer = read[:k]
 
-            # return
-        
-        prev_node = self.nodes[prev]
-        next_node = self.nodes[next]
+            self.starts.append(self.map_to_nodes[prev_kmer])
+            
+            curr_kmer = read[1:k]
 
-        prev_twin = self._get_twin(prev)
-        next_twin = self._get_twin(next)
+            for i in range(k, len(read)):
+                if i > k: curr_kmer = curr_kmer[1:]
+                curr_kmer += read[i]
 
-        to_next = prev_node._has_out_edge(next)
-        if to_next is not None: to_next._increase_multiplicity()
-        else: prev_node.out_edges.append(Edge(next, 1))
+                prev_node = self.nodes[self.map_to_nodes[prev_kmer]]
+                curr_node = self.nodes[self.map_to_nodes[curr_kmer]]
 
-        to_prev = next_node._has_in_edge(prev)
-        if to_prev is not None: to_prev._increase_multiplicity()
-        else: next_node.in_edges.append(Edge(prev, 1))
-        
-        # connect twin nodes
-        to_next = prev_twin._has_in_edge(-next)
-        if to_next is not None: to_next._increase_multiplicity()
-        else: prev_twin.in_edges.append(Edge(-next, 1))
+                self.add_edge(prev_node, curr_node)
 
-        to_prev = next_twin._has_out_edge(-prev)
-        if to_prev is not None: to_prev._increase_multiplicity()
-        else: next_twin.out_edges.append(Edge(-prev, 1))
+                prev_kmer = curr_kmer
 
-    def get_node_count(self):
-        return self.next_id - 1
-
-    def can_merge(self, node_a, node_b):
-        # TODO: better way to do this?
-        # if we store self-loops in both directions (i.e, as incoming and outgoing edges)
-        # return ((len(node_a.out_edges) == 1 and not node_a.self_loop()) or (len(node_a.out_edges) == 2 and node_a.self_loop())) \
-        # and ((len(node_b.in_edges) == 1 and not node_b.self_loop()) or (len(node_b.in_edges) == 2 and node_b.self_loop()))
-
-        # if we store them only as outgoing edges
-        # return (len(node_a.out_edges) == 1 and node_a.out_edges[0].dest == node_b.id) and \
-        #         (len(node_b.in_edges) == 1)
-        if abs(node_a.id) == abs(node_b.id): return False
-
-        return len(node_a.out_edges) == 1 and node_a.out_edges[0].dest == node_b.id and \
-            len(node_b.in_edges) == 1 and node_b.in_edges[0].dest == node_a.id
-    
-    def merge_nodes(self, node_a, node_b):
-        seq = node_a.seq + node_b.seq[-1]
-        node_a.seq = seq
-
-        # node_a only had outgoing edge to node_b, so it simply inherits all node_b's outgoing edges
-        node_a.out_edges = node_b.out_edges
-        for edge in node_b.out_edges:
-            # for each node_b -> node x edge, replace incoming edge from node b with incoming edge from node a
-            dest = self.nodes[edge.dest]
-            dest.replace_edge(node_b.id, node_a.id)
-        
-        # remove pointers to node b from node a
-        for edge in node_b.in_edges:
-            # node_a.in_edges.append(edge)
-            e = node_a._has_in_edge(edge.dest)
-            if e: e.multiplicity += edge.multiplicity
-            else: node_a.in_edges.append(edge)
-            dest = self.nodes[edge.dest]
-            dest.replace_edge(node_b.id, node_a.id, False)
-
-        # repeat for twin nodes
-        twin_a = self._get_twin(node_a.id)
-        twin_a.seq = reverse_complement(seq)
-        twin_b = self._get_twin(node_b.id)
-
-        twin_a.in_edges = twin_b.in_edges
-        for edge in twin_b.in_edges:
-            dest = self.nodes[edge.dest]
-            dest.replace_edge(twin_b.id, twin_a.id, False)
-        
-        for edge in twin_b.out_edges:
-            # twin_a.out_edges.append(edge)
-            e = twin_a._has_out_edge(edge.dest)
-            if e: e.multiplicity += edge.multiplicity
-            else: twin_a.out_edges.append(edge)
-            dest = self.nodes[edge.dest]
-            dest.replace_edge(twin_b.id, twin_a.id)
-
-        new_starts = []
+    def remove_from_starts(self, node_id):
+        filtered_starts = []
         for s in self.starts:
-            if s != node_b.id: new_starts.append(s)
-        
-        self.starts = new_starts
+            if s != node_id: filtered_starts.append(s)
+        self.starts = filtered_starts
 
-        # delete entries for node b and its twin
+    def concatenate_two_nodes(self, node_a, node_b):
+        # node a only has one outgoing edge, so simply inherit all node b's edges
+        node_a.out_edges = node_b.out_edges
+
+        # all nodes with incoming edges from b should now have incoming edges from a
+        for other_end, mult in node_b.out_edges.items():
+            node = self.nodes[other_end]
+            node.in_edges[node_a.id] = mult
+            del node.in_edges[node_b.id]
+        
+        twin_a = self.nodes[-node_a.id]
+        twin_b = self.nodes[-node_b.id]
+
+        # twin a must have only one incoming edge, so simply inherit all twin b's incoming edges
+        twin_a.in_edges = twin_b.in_edges
+
+        # all nodes with outgoing edges into twin b should now point to twin a
+        for other_end, mult in twin_b.in_edges.items():
+            node = self.nodes[other_end]
+            node.out_edges[twin_a.id] = mult
+            del node.out_edges[twin_b.id]
+
+        # delete old sequences from map
+        del self.map_to_nodes[node_a.seq]
+        del self.map_to_nodes[twin_a.seq]
+        
+        # modify sequences
+        node_a.seq += node_b.seq[self.k-1:]
+        twin_a.seq = twin_b.seq + twin_a.seq[self.k-1:]
+
+        # add updated sequences to map
+        self.map_to_nodes[node_a.seq] = node_a.id
+        self.map_to_nodes[twin_a.seq] = twin_a.id
+
+        # delete node b
+        del self.map_to_nodes[node_b.seq]
         del self.nodes[node_b.id]
+
+        # delete node b's twin
+        del self.map_to_nodes[twin_b.seq]
         del self.nodes[twin_b.id]
 
-    def destroy_tip(self, node_id):
-        curr = self.nodes[node_id]
-        twin = self.nodes[-node_id]
-        prev = None
+        self.remove_from_starts(node_b.id)
+        self.remove_from_starts(twin_b.id)
 
-        to_delete = []
+    def concatenate_nodes(self):
+        modified = True
 
-        while (len(curr.in_edges) == 1 and len(curr.out_edges) == 0 and len(twin.out_edges) == 1 and len(twin.in_edges) == 0) or \
-                (len(curr.out_edges) == 1 and len(curr.in_edges) == 0 and len(twin.in_edges) == 1 and len(twin.out_edges) == 0):
-            
-            twin = self.nodes[-curr.id]
-            del self.map_to_id[curr.seq]
-            del self.map_to_id[twin.seq]
+        while modified:
+            modified = False
 
-            to_delete.append(curr.id)
-            to_delete.append(-curr.id)
+            for node in self.nodes.values():
+                if len(node.out_edges) == 1:
+                    other_end = self.nodes[list(node.out_edges.keys())[0]]
 
-            prev = curr
-            curr = self.nodes[curr.out_edges[0].dest]
-            twin = self.nodes[-curr.id]
-        
-        if prev:
-            other_end = self.nodes[prev.out_edges[0].dest]
-
-            other_end.remove_edge(prev.id)
-
-            prev_twin = self.nodes[-prev.id]
-            other_end = self.nodes[prev_twin.in_edges[0].dest]
-
-            other_end.remove_edge(prev_twin.id, False)
-        
-        filtered_start = []
-        for s in self.starts:
-            if s != node_id: filtered_start.append(s)
-        self.starts = filtered_start
-        
-        for n in to_delete: del self.nodes[n]
-
-
-def create_pre_nodes(reads, kmer_table, hash_length, graph):
-    for i in range(len(reads)):
-        seq = reads[i]
-        start = 0
-
-        prev_node = 0
-        
-        # get initial kmer
-        new_kmer = seq[start:hash_length]
-
-        # initialize sequence of uninterrupted kmers
-        consecutive_seq = seq[start:hash_length - 1]
-
-        for end in range(hash_length - 1, len(seq)):
-            # if not in initial kmer, slide kmer window
-            if end >= hash_length: new_kmer = new_kmer[1:] + seq[end]
-            
-            can_kmer, dir = canonical_form(new_kmer)
-            first_occurrence = kmer_table[can_kmer][0]
-
-            # if newly added kmer to the window overlaps with other reads
-            if len(kmer_table[can_kmer]) > 1:
-                # create a new node for the previously uninterrupted sequence of kmers
-                if (end - 1) - start + 1 >= hash_length:
-                    curr_node = graph.next_id
-                    graph._insert_node(consecutive_seq)
-
-                    graph._add_edge(prev_node, curr_node)
-                    prev_node = curr_node
+                    if abs(node.id) != abs(other_end.id) and len(other_end.in_edges) == 1:
+                        
+                        self.concatenate_two_nodes(node, other_end)
+                        modified = True
                 
-                # create a node for the overlapping kmer
-                if (i, dir, end - hash_length + 1) == first_occurrence:
-                    curr_node = graph.next_id
-                    graph._insert_node(new_kmer)
-                    graph._add_edge(prev_node, curr_node)
-                    prev_node = curr_node
-                
-                else:
-                    curr_node = graph.map_to_id[new_kmer]
-                    graph._add_edge(prev_node, curr_node)
-                    prev_node = curr_node
-                
-                # slide window
-                start = end - hash_length + 2
-                consecutive_seq = consecutive_seq[1:]
-            
-            consecutive_seq += seq[end]
-            
-            # if we have reached the end of the read and there is no overlap create a node
-            # for this rightmost run of uninterrupted kmers
-            if end == len(seq) - 1 and len(kmer_table[can_kmer]) == 1:
-                curr_node = graph.next_id
-                graph._insert_node(consecutive_seq)
-                graph._add_edge(prev_node, curr_node)
-                prev_node = curr_node
+                if modified: break
+        return
+    
+    def find_start_points(self):
+        start_points = []
 
-def concatenate_nodes(graph):
-    modified = True
-
-    # keep simplifying until graph stops changing
-    while modified:
-        modified = False
+        for node in self.nodes.values():
+            if len(node.in_edges) == 0: start_points.append(node.id)
         
-        for node in graph.nodes.values():
-            if node.id < 0: continue
-            
-            # node only has one outgoing edge
-            if len(node.out_edges) == 1:
-                other_end = node.out_edges[0].dest
-                end_node = graph.nodes[other_end]
+        return start_points
+    
+    def destroy_tip(self, tip):
+        """
+        Destroys all nodes in the tip, along with their twin nodes.
+        Update edges for node connected to last node in the tip.
+        """
+        last_node = self.nodes[tip[-1]]
+        last_twin = self.nodes[-tip[-1]]
 
-                if (graph.can_merge(node, end_node)):
-                    graph.merge_nodes(node, end_node)
+        # unlink outgoing and incoming edges from last node in the tip
+        for other_end in last_node.out_edges.keys():
+            node = self.nodes[other_end]
+            del node.in_edges[last_node.id]
+
+        for other_end in last_node.in_edges.keys():
+            node = self.nodes[other_end]
+            del node.out_edges[last_node.id]
+
+        # unlink outgoing and incoming edges from last twin in the tip
+        for other_end in last_twin.out_edges.keys():
+            node = self.nodes[other_end]
+            del node.in_edges[last_twin.id]
+
+        for other_end in last_twin.in_edges.keys():
+            node = self.nodes[other_end]
+            del node.out_edges[last_twin.id]
+
+        # delete entries for all nodes in the tip
+        for node in tip:
+            node_obj = self.nodes[node]
+            twin = self.nodes[-node]
+
+            del self.map_to_nodes[node_obj.seq]
+            del self.map_to_nodes[twin.seq]
+
+            del self.nodes[node]
+            del self.nodes[twin.id]
+        
+        self.remove_from_starts(tip[0])
+        self.remove_from_starts(-tip[0])
+        return
+    
+    def clip_tips(self):
+        start_points = self.starts
+        modified = True
+
+        while modified:
+            modified = False
+            for s in start_points:
+                curr_node = self.nodes[s]
+
+                tip = []
+                length = 0
+
+                while curr_node.simple_edge():
+                    tip.append(curr_node.id)                 
+                    length += curr_node.length(self.k)
+
+                    other_end = list(curr_node.out_edges.keys())[0]
+                    curr_node = self.nodes[other_end]
+
+                if length > 0 and length < 2 * self.k:
+                    self.destroy_tip(tip)
                     modified = True
+
+                if modified: break
             
-            if modified:
-                break
-                
+            # if modified: start_points = start_points[1:]        
+        return
+    
+    def merge_nodes(self, node_a, node_b):
+        """
+        Merges nodes that were determined to be similar enough when merging paths.
+        Node a should inherit node b's edges.
+        """
+        for other_end, mult in node_b.in_edges.items(): 
+            node_a.add_incoming_edge(other_end, mult)
 
-# def tour_bus(graph):
-#     """
-#     Identifies bubbles in the graph, i.e., paths starting from the same node, and ending in the same node.
-#     These are identified through BFS.
-#     """
+            # remove pointers to b and re-map to node a
+            other_end_node = self.nodes[other_end]
+            # other_end.replace_edge(node_b.id, node_a.id, False)
+            del other_end_node.out_edges[node_b.id]
+            other_end_node.add_outgoing_edge(node_a.id, mult)
 
-#     # BFS
+        for other_end, mult in node_b.out_edges.items(): 
+            node_a.add_outgoing_edge(other_end, mult)
 
-#     # when a node has already been visited -> backtrack until first common ancestor
+            other_end_node = self.nodes[other_end]
+            del other_end_node.in_edges[node_b.id]
+            other_end_node.add_incoming_edge(node_a.id, mult)
 
-#     # if paths are very similar -> keep consensus
+        twin_a = self.nodes[-node_a.id]
+        twin_b = self.nodes[-node_b.id]
 
-def clip_tips(graph):
-    """
-    Removes tips from the graph that are less than 2 * k in length.
-    """    
-    modified = True
+        for other_end, mult in twin_b.in_edges.items(): 
+            twin_a.add_incoming_edge(other_end, mult)
 
-    while modified:
-        modified = False
+            other_end_node = self.nodes[other_end]
+            del other_end_node.out_edges[twin_b.id]
+            other_end_node.add_outgoing_edge(twin_a.id, mult)
+        
+        for other_end, mult in twin_b.out_edges.items(): 
+            twin_a.add_outgoing_edge(other_end, mult)
 
-        for s in graph.starts:
-            node = graph.nodes[s]
-            twin = graph.nodes[-s]
-            length = 0
-            simple = False
+            other_end_node = self.nodes[other_end]
+            del other_end_node.in_edges[twin_b.id]
+            other_end_node.add_incoming_edge(twin_a.id, mult)
 
-            while (len(node.in_edges) == 1 and len(node.out_edges) == 0 and len(twin.out_edges) == 1 and len(twin.in_edges) == 0) or \
-                (len(node.out_edges) == 1 and len(node.in_edges) == 0 and len(twin.in_edges) == 1 and len(twin.out_edges) == 0):
-                if length == 0: length += graph.length(node)
-                else: length += graph.length(node) - (graph.hash_length - 1)
+        # delete all entries to node b and its twin
+        del self.nodes[node_b.id]
+        del self.nodes[-node_b.id]
+        del self.map_to_nodes[node_b.seq]
+        del self.map_to_nodes[twin_b.seq]
+        
+        self.remove_from_starts(node_b.id)
+        self.remove_from_starts(twin_b.id)
+        return
 
-                node = graph.nodes[node.out_edges[0].dest]
-                twin = graph.nodes[-node.id]
-
-                simple = True
-
-            if simple and length < 2 * graph.hash_length:
-
-                graph.destroy_tip(s)
-
-                modified = True
-
-            if modified: break
-    return
+    def merge_paths(self, path1, path2):
+        """
+        Merges two paths forming a bubble that were considered similar enough.
+        Path 1 should be the path that was reached first, i.e., the higher coverage path.
+        """
+        path2_ptr = 0
+        for node_id in path1:
+            path1_node = self.nodes[node_id]
+            path2_node = self.nodes[path2[path2_ptr]]
+            
+            similar = path1_node.compare(path2_node)
+            if similar:
+                # print(f"node {node_id} will be merged with {path2_node.id}")
+                self.merge_nodes(path1_node, path2_node)
+                path2_ptr += 1
+        return
+    
+    def get_contigs(self):
+        """
+        Outputs long nodes in the graph.
+        """
+        contigs = []
+        for id, node in self.nodes.items():
+            if id < 0 or node.length(self.k) < self.k:
+                continue
+            contigs.append(node.seq)
+        return contigs

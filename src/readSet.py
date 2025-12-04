@@ -1,10 +1,23 @@
 import gzip
 import sys
 
+def read_fastq(lines):
+    i = 0
+    seqs = []
+    while i < len(lines) - 3:
+        header = lines[0].strip()
+        if not header: break
+
+        seq = lines[i+1].strip()
+        seqs.append(seq)
+        i += 2
+
+    return seqs
+
 """
 Functions associated with parsing input files.
 """
-def parse_and_read_file(filename, filetype="FASTA", double_strand = True, no_hash = False):
+def parse_and_read_file(filename, filetype="FASTA"):
     if filetype in ["FASTA_GZ", "FASTQ_GZ"]:
         with gzip.open(filename, "rt") as f:
             content = f.readlines()
@@ -25,6 +38,8 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = True, no_has
         if len(content) and len(content[0]) and content[0][0] != '@':
             print(f"{filename} does not seem to be in FASTQ format.")
             sys.exit(0)
+        
+        return read_fastq(content)
     
     # parsing read ids and their corresponding sequence
     names, seqs = [], []

@@ -8,10 +8,12 @@ def reverse_complement(seq: str):
 
 def canonical_form(seq: str):
     rev_seq = reverse_complement(seq)
-    # return min(seq, rev_seq)
     return ((seq, 1) if seq < rev_seq else (rev_seq, -1))
 
 def compare_sequences(u, v):
+    """
+    Determines whether two sequences are similar enough using global alignment.
+    """
     MAX_GAPS = 3
     MAX_DIVERGENCE = 0.2
     INDEL = 0
@@ -38,24 +40,9 @@ def compare_sequences(u, v):
                 network[i][j-1] + INDEL,
                 network[i-1][j-1] + (MATCH if u[i-1] == v[j-1] else -MATCH)
             )
-
-    # BACKTRACK TO CONSTRUCT ALIGNMENT
-    i, j = n - 1, m - 1
-
-    while i > 0 or j > 0:
-        # vertical gap, 'move' along u
-        if network[i][j] == network[i-1][j] + INDEL:
-            i -= 1
-        # horizontal gap, 'move' along v
-        elif network[i][j] == network[i][j-1] + INDEL:
-            j -= 1
-        # if match or mismatch, 'move' along both sequences
-        else:
-            i -= 1
-            j -= 1
         
     max_score = network[n-1][m-1]
-    max_len = max(u, v)
+    max_len = max(len(u), len(v))
 
     if max_score < max_len - MAX_GAPS: return False
     if (1 - max_score / max_len) > MAX_DIVERGENCE: return False
@@ -88,3 +75,22 @@ def settings(args):
     if k % 2 == 0: k -= 1
 
     return output_dir, filepath, k, filetype, read_type
+
+def n50(seqs, k):
+    sorted_list = sorted(seqs, len)
+    total_len = 0
+
+    for s in sorted_list:
+        # length is measured in terms of kmers
+        # TODO: check if this should be len(s) - k + 1?
+        total_len += len(s) - k + 1
+    
+    curr_len = 0
+    for s in sorted_list:
+        this_len = len(s) - k + 1
+        curr_len += this_len
+
+        if curr_len >= total_len / 2:
+            return this_len
+    
+    return -1

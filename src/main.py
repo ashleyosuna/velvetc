@@ -1,43 +1,38 @@
 import sys
-from utils import settings, canonical_form
 from readSet import parse_and_read_file
-from kmerOccurrenceTable import kmer_occurrences
-import graph
+from utils import settings
+from kmerOccurrences import kmer_occurrences
+from graph import Graph
+from tourbus import tourbus
+from utils import n50
 
 # getting command-line arguments
 argv = sys.argv
 output_dir, filepath, hash_length, file_format, read_type = settings(argv[1:])
 
-# 1. Read input file (focus on FASTA/FASQ files)
+# Read input file (focus on FASTA/FASQ files)
 reads = parse_and_read_file(filepath, file_format)
 
-# 2. Build kmer hash table
-    # For each k-mer observed in the set of reads, the hash table records the ID of the first read encountered containing that k-mer and the position of its occurrence within that read. 
-    # Each k-mer is recorded simultaneously to its reverse complement. 
+kmers = kmer_occurrences(reads, hash_length)
 
-kmer_table = kmer_occurrences(reads, hash_length)
+graph = Graph(hash_length)
 
-# 3. Build graph
-pre_graph = graph.Graph(hash_length=hash_length)
+graph.create_init_nodes(kmers)
 
-graph.create_pre_nodes(reads, kmer_table, hash_length, pre_graph)
+graph.map_through_reads(reads)
 
-graph.concatenate_nodes(pre_graph)
+graph.concatenate_nodes()
 
-print(pre_graph.nodes, pre_graph.starts)
+graph.clip_tips()
 
-# for n in pre_graph.nodes:
-#     print(n[0].out_edges, n[0].in_edges)
-#     print(n[1].out_edges, n[1].in_edges, '\n\n')
+tourbus(graph)
 
-graph.clip_tips(pre_graph)
+graph.concatenate_nodes()
 
-print(pre_graph.nodes, pre_graph.starts)
+contigs = graph.get_contigs()
 
-# 3. Build roadmaps
-    # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
-# 4. Build second database
-    # A second database is created with the opposite information. It records, for each read, which of its original k-mers are overlapped by subsequent reads.
-# 5. Build graph
-# 6. Simplify the graph
-# 7. Write contigs and graph stats to output file specified?
+print(contigs)
+
+print(n50(contigs, hash_length))
+
+# output nodes to file
