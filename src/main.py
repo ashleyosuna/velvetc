@@ -15,6 +15,8 @@ reads = parse_and_read_file(filepath, file_format)
 
 kmers = kmer_occurrences(reads, hash_length)
 
+print(len(kmers), "kmers found")
+
 graph = Graph(hash_length)
 
 graph.create_init_nodes(kmers)
