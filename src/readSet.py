@@ -57,12 +57,12 @@ def parse_and_read_file(filename, filetype="FASTA"):
 
 def output_contigs(filename, contigs):
     with open(f"{filename}.txt", "w") as f:
-        lines = []
+        lines = """"""
 
         for contig in contigs:
             line = f"{contig}\n"
-            lines.append(line)
+            lines += line
 
-        f.writelines(lines)
+        f.write(lines)
     
     return
