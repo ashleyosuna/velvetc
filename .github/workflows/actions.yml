@@ -32,10 +32,10 @@ jobs:
       - name: Running e-coli experiment (velvet)
         shell: bash -l {0}
         run: |
-          velveth velvet_test 31 -fastq src/tests/ecoli_10x.fq
+          velveth velvet_test 21 -fastq src/tests/ecoli_5x.fq
           velvetg velvet_test -cov_cutoff 0
       - name: Running e-coli experiment
         run: |
           set -euxo pipefail
           PATH=${PATH}:${HOME}/.codon/bin
-          codon run -release src/main.py test src/tests/ecoli_10x.fq k=31 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_5x.fq k=21 filetype=FASTQ
