@@ -1,8 +1,8 @@
 REF=ecoli.fasta
 REGION_LEN=5000000
-COVERAGE=50
+COVERAGE=40
 READLEN=100
-OUT_PREFIX=ecoli_50x
+OUT_PREFIX=ecoli_40x
 
 samtools faidx $REF
 
