@@ -91,6 +91,6 @@ def n50(seqs, k):
         curr_len += this_len
 
         if curr_len >= total_len / 2:
-            return this_len, len(sorted_list[-1]) - k + 1
+            return this_len, len(sorted_list[-1]) - k + 1, total_len
     
-    return 0, 0
+    return 0, 0, total_len
