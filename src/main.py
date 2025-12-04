@@ -43,9 +43,9 @@ print("After concatenating", graph.node_count)
 
 contigs = graph.get_contigs()
 
-print(contigs)
+n50_len, max_len = n50(contigs, hash_length)
 
-print(n50(contigs, hash_length))
+print(f"Final graph has {g.node_count} nodes and n50 of {n50_len}, max {max_len}")
 
 # output nodes to file
 output_contigs(output_file, contigs)
