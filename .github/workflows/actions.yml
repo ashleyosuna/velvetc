@@ -30,6 +30,7 @@ jobs:
         shell: bash -l {0}
         run: conda install bioconda::velvet
       - name: Running e-coli experiment (velvet)
+        shell: bash -l {0}
         run: |
           velveth velvet_test 31 -fastq src/tests/ecoli_10x.fq src/tests/ecoli_50x.fq
           velvetg velvet_test -cov_cutoff 0
