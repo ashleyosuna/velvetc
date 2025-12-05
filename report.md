@@ -1,4 +1,5 @@
 # BabyVelvet: A Reimplementation of Velvet in the Codon Programming Language
+Ashley Osuna and Michelle Rosenthal
 
 ## ABSTRACT
 Velvet is a set of algorithms to create and manipulate de Bruijn graphs for the purpose of genomic sequence assembly. Velvet is able to produce significantly long and useful contiguous sequences even with very short reads. The original implementation of Velvet is written in C. Here we attempt to re-implement Velvet in Codon, a high performance Python implementation that compiles to native machine code, to evaluate whether Codon can match or improve on the efficiency achieved through Velvet’s C implementation.
