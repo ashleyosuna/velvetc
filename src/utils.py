@@ -59,7 +59,7 @@ def settings(args):
     filepath = args[1]
 
     # setting default options
-    k = 31
+    k = 3
     filetype = "FASTA"
     read_type = "short"
 
