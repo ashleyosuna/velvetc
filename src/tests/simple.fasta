@@ -1,6 +1,6 @@
->seq1
-ATGCATGCA
->seq2
-ATGCGT
->seq3
-ATACTGGAT
+>r1
+GATGCA
+>r2
+GCAAA
+>r3
+AAATT

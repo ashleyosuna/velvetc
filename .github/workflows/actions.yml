@@ -1,0 +1,66 @@
+name: Github CI
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Install Codon
+        run: |
+          mkdir -p ${HOME}/.codon
+          curl -L https://github.com/exaloop/codon/releases/download/v0.19.3/codon-linux-x86_64.tar.gz | tar zxvf - --strip-components=1 -C ${HOME}/.codon
+          curl -L https://github.com/exaloop/seq/releases/download/v0.11.5/seq-linux-x86_64.tar.gz | tar zxvf - -C ${HOME}/.codon/lib/codon/plugins
+          export PATH=${PATH}:${HOME}/.codon/bin
+      - name: Check out repository code
+        uses: actions/checkout@v5
+        with:
+          lfs: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - name: Set up Codon Python bridge
+        run: |
+          pip install find_libpython
+          export CODON_PYTHON=$(find_libpython)
+          echo "Found Python at: ${CODON_PYTHON}"
+      - uses: conda-incubator/setup-miniconda@v3
+      - name: Installing velvet
+        shell: bash -l {0}
+        run: conda install bioconda::velvet
+      - name: Running e-coli experiment (velvet)
+        shell: bash -l {0}
+        run: |
+          set -euxo pipefail
+          velveth velvet_test1 21 -fastq src/tests/ecoli_3x_10k_region.fq
+          velvetg velvet_test1 -cov_cutoff 0
+
+          velveth velvet_test2 21 -fastq src/tests/ecoli_3x_25k_region.fq
+          velvetg velvet_test2 -cov_cutoff 0
+
+          velveth velvet_test3 21 -fastq src/tests/ecoli_3x_50k_region.fq
+          velvetg velvet_test3 -cov_cutoff 0
+
+          velveth velvet_test4 21 -fastq src/tests/ecoli_3x_75k_region.fq
+          velvetg velvet_test4 -cov_cutoff 0
+
+          velveth velvet_test5 21 -fastq src/tests/ecoli_3x_100k_region.fq
+          velvetg velvet_test5 -cov_cutoff 0
+
+          velveth velvet_test6 21 -fastq src/tests/ecoli_3x_125k_region.fq
+          velvetg velvet_test6 -cov_cutoff 0
+
+          velveth velvet_test7 21 -fastq src/tests/ecoli_3x_150k_region.fq
+          velvetg velvet_test7 -cov_cutoff 0
+      - name: Running e-coli experiment (our implementation)
+        run: |
+          set -euxo pipefail
+          PATH=${PATH}:${HOME}/.codon/bin
+          codon run -release src/main.py test src/tests/ecoli_3x_10k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_25k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_50k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_75k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_100k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_125k_region.fq k=21 filetype=FASTQ
+          codon run -release src/main.py test src/tests/ecoli_3x_150k_region.fq k=21 filetype=FASTQ

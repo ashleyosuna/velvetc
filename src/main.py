@@ -1,35 +1,67 @@
 import sys
-from utils import settings, canonical_form
-from readSet import parse_and_read_file
-from kmerOccurrenceTable import kmer_occurrences
-import graph
+from readSet import parse_and_read_file, output_contigs
+from utils import settings
+from kmerOccurrences import kmer_occurrences
+from graph import Graph
+from tourbus import tourbus
+from utils import n50
 
 # getting command-line arguments
 argv = sys.argv
-output_dir, filepath, hash_length, file_format, read_type = settings(argv[1:])
+output_file, filepath, hash_length, file_format, read_type = settings(argv[1:])
 
-# 1. Read input file (focus on FASTA/FASQ files)
+# Read input file (focus on FASTA/FASQ files)
 reads = parse_and_read_file(filepath, file_format)
 
-# 2. Build kmer hash table
-    # For each k-mer observed in the set of reads, the hash table records the ID of the first read encountered containing that k-mer and the position of its occurrence within that read. 
-    # Each k-mer is recorded simultaneously to its reverse complement. 
+print(f"{len(reads)} reads found")
 
-kmer_table = kmer_occurrences(reads, hash_length)
+kmers = kmer_occurrences(reads, hash_length)
 
-# 3. Build graph
-pre_nodes = graph.create_pre_nodes(reads, kmer_table, hash_length)
-print(pre_nodes)
+print(len(kmers), "kmers found")
 
-# 3. Build roadmaps
-    # rewrite each read as a set of original k-mers combined with overlaps with previously hashed reads
+graph = Graph(hash_length)
 
-second_db = build_second_db(reads, hash_length, khash)
-print("\n")
-print(second_db)
+graph.create_init_nodes(reads, kmers)
 
-# 4. Build second database
-    # A second database is created with the opposite information. It records, for each read, which of its original k-mers are overlapped by subsequent reads.
-# 5. Build graph
-# 6. Simplify the graph
-# 7. Write contigs and graph stats to output file specified?
+print("Initial nodes", graph.node_count)
+
+# graph.map_through_reads(reads)
+
+graph.concatenate_nodes()
+
+print("After concatenating", graph.node_count)
+
+graph.clip_tips()
+
+print("After clipping tips", graph.node_count)
+
+graph.concatenate_nodes()
+
+print("After concatenating", graph.node_count)
+
+tourbus(graph)
+
+print("After running tourbus", graph.node_count)
+
+graph.concatenate_nodes()
+
+print("After concatenating", graph.node_count)
+
+graph.clip_tips()
+
+print("After clipping tips", graph.node_count)
+
+# remove low coverage nodes?
+
+graph.concatenate_nodes()
+
+print("After final concatenation", graph.node_count)
+
+contigs = graph.get_contigs()
+
+n50_len, max_len, total_len = n50(list(contigs.values()), hash_length)
+
+print(f"Final graph has {graph.node_count} nodes and n50 of {n50_len}, max {max_len}, total {total_len}")
+
+# output nodes to file
+output_contigs(output_file, contigs, hash_length)

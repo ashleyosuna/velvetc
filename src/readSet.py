@@ -4,7 +4,21 @@ import sys
 """
 Functions associated with parsing input files.
 """
-def parse_and_read_file(filename, filetype="FASTA", double_strand = True, no_hash = False):
+
+def read_fastq(lines):
+    i = 0
+    seqs = []
+    while i < len(lines) - 3:
+        header = lines[0].strip()
+        if not header: break
+
+        seq = lines[i+1].strip()
+        seqs.append(seq)
+        i += 4
+
+    return seqs
+
+def parse_and_read_file(filename, filetype="FASTA"):
     if filetype in ["FASTA_GZ", "FASTQ_GZ"]:
         with gzip.open(filename, "rt") as f:
             content = f.readlines()
@@ -25,6 +39,8 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = True, no_has
         if len(content) and len(content[0]) and content[0][0] != '@':
             print(f"{filename} does not seem to be in FASTQ format.")
             sys.exit(0)
+        
+        return read_fastq(content)
     
     # parsing read ids and their corresponding sequence
     names, seqs = [], []
@@ -38,3 +54,15 @@ def parse_and_read_file(filename, filetype="FASTA", double_strand = True, no_has
     
     # return dict(zip(names, seqs))
     return seqs
+
+def output_contigs(filename, contigs, k):
+    with open(f"{filename}.txt", "w") as f:
+        lines = """"""
+
+        for id, seq in contigs.items():
+            line = f">NODE {id}; length {len(seq) - k + 1}\n{seq}\n"
+            lines += line
+
+        f.write(lines)
+    
+    return
