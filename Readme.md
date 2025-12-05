@@ -1,6 +1,6 @@
 # BabyVelvet
 
-This project introduces BabyVelvet, a lightweight re-implementation of the Velvet algorithms for short read de Bruijn graph assembly in the Codon programming language. Codon is a domain-extensible compiler and DSL framework with Python’s syntax and semantics. Codon provides the benefits of readability, while achieving performance similar to low level languages such as C or C++. The goal of this project was to implement the core ideas of the Velvet program [1].
+This project introduces BabyVelvet, a lightweight re-implementation of the Velvet algorithm for short read de Bruijn graph assembly in the Codon programming language. Codon is a domain-extensible compiler and DSL framework with Python’s syntax and semantics. Codon provides the benefits of readability, while achieving performance similar to low level languages such as C or C++. The goal of this project was to implement the core ideas of the original Velvet program [1].
 
 BabyVelvet constructs a deBruijn graph, performs concatenation of nodes, clipping short tips, and bubble resolution (inspired by Velvet's Tour Bus bubble-resolution method), and outputs the assembled contigs.
 
