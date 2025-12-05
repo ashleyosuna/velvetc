@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+# import matplotlib.pyplot as plt
 
 def reverse_complement(seq: str):
     copy = seq[::-1]
@@ -94,3 +95,26 @@ def n50(seqs, k):
             return this_len, len(sorted_list[-1]) - k + 1, total_len
     
     return 0, 0, total_len
+
+# def graph():
+#     x_axis = [855, 2142, 4284,  6426, 8571, 10713]
+
+#     y_velvet_num_nodes = [33, 88, 155, 247, 342, 492]
+#     y_us_num_nodes = [283, 709, 1416, 2129, 2868, 3555]
+
+#     n50_velvet = [60, 63, 58, 58, 56, 58]
+#     n50_us = [39, 42, 39, 39, 40, 39]
+
+#     plt.xlabel("No. of reads")
+#     plt.ylabel("N50")
+
+#     # plt.plot(x_axis, y_velvet_num_nodes, label='Velvet')
+#     # plt.plot(x_axis, y_us_num_nodes, label="Us")
+
+#     plt.plot(x_axis, n50_velvet, label='Velvet')
+#     plt.plot(x_axis, n50_us, label="Us")
+#     plt.legend()
+
+#     plt.show()
+
+# graph()

@@ -1,4 +1,4 @@
-from utils import reverse_complement
+from utils import reverse_complement, canonical_form
 from typing import List
 import numpy as np
 
@@ -84,26 +84,113 @@ class Graph:
     @property
     def node_count(self):
         return len(self.nodes) / 2
+    
+    def add_node(self, node):
+        self.nodes[node.id] = node
+        self.map_to_nodes[node.seq] = node.id
 
-    def create_init_nodes(self, kmers):
+        rc = reverse_complement(node.seq)
+
+        twin_node = Node(rc, -node.id)
+        self.nodes[twin_node.id] = twin_node
+        self.map_to_nodes[rc] = twin_node.id
+
+    def create_init_nodes(self, reads, kmers):
         """
         Creates initial nodes and their twins as given by the canonical kmers.
         """
-        next_id = 1
+        # next_id = 1
         
-        for kmer in kmers:
-            # creating canonical node
-            self.nodes[next_id] = Node(kmer, next_id)
-            self.map_to_nodes[kmer] = next_id
+        # for kmer in kmers:
+        #     # creating canonical node
+        #     self.nodes[next_id] = Node(kmer, next_id)
+        #     self.map_to_nodes[kmer] = next_id
 
-            # creating twin node
-            rc = reverse_complement(kmer)
-            self.nodes[-next_id] = Node(rc, -next_id)
-            self.map_to_nodes[rc] = -next_id
+        #     # creating twin node
+        #     rc = reverse_complement(kmer)
+        #     self.nodes[-next_id] = Node(rc, -next_id)
+        #     self.map_to_nodes[rc] = -next_id
             
-            next_id += 1
+        #     next_id += 1
+        next_id = 1
+        for i in range(len(reads)):
+            seq = reads[i]
+            start = 0
+
+            prev_node = None
+        
+            # get initial kmer
+            new_kmer = seq[start:self.k]
+
+            # initialize sequence of uninterrupted kmers
+            consecutive_seq = seq[start:self.k - 1]
+
+            for end in range(self.k - 1, len(seq)):
+                # if not in initial kmer, slide kmer window
+                if end >= self.k: new_kmer = new_kmer[1:] + seq[end]
+                
+                can_kmer, dir = canonical_form(new_kmer)
+                first_occurrence = kmers[can_kmer][0]
+
+                # if newly added kmer to the window overlaps with other reads
+                if len(kmers[can_kmer]) > 1:
+                    # create a new node for the previously uninterrupted sequence of kmers
+                    if (end - 1) - start + 1 >= self.k:
+                        node = Node(consecutive_seq, next_id)
+                        self.add_node(node)
+
+                        # twin = graph._get_twin(node)
+
+
+                        # graph._add_edge(prev_node, twin)
+                        # prev_node = node
+                        # pre_nodes.append(node)
+
+                        self.add_edge(prev_node, node)
+                        prev_node = node
+
+                        next_id += 1
+                    
+                    # create a node for the overlapping kmer
+                    if (i, dir, end - self.k + 1) == first_occurrence:
+                        node = Node(new_kmer, next_id)
+                        # pre_nodes.append(node)
+                        self.add_node(node)
+                        # twin = graph._get_twin(node)
+
+                        self.add_edge(prev_node, node)
+                        prev_node = node
+                        next_id += 1
+                    
+                    else:
+                        curr_node = self.nodes[self.map_to_nodes[new_kmer]]
+                        # twin = graph._get_twin(curr_node)
+                        self.add_edge(prev_node, curr_node)
+                        prev_node = curr_node
+                    
+                    # slide window
+                    start = end - self.k + 2
+                    consecutive_seq = consecutive_seq[1:]
+                
+                consecutive_seq += seq[end]
+                
+                # if we have reached the end of the read and there is no overlap create a node
+                # for this rightmost run of uninterrupted kmers
+                if end == len(seq) - 1 and len(kmers[can_kmer]) == 1:
+                    node = Node(consecutive_seq, next_id)
+                    # pre_nodes.append(node)
+                    self.add_node(node)
+                    # twin = graph._get_twin(node)
+
+                    self.add_edge(prev_node, node)
+                    prev_node = node
+                    next_id += 1
 
     def add_edge(self, node_a, node_b):
+        # print(node_a, node_b)
+        if node_a is None: 
+            self.starts.append(node_b.id)
+            return
         # add outgoing edge to b into node a
         node_a.add_outgoing_edge(node_b.id, 1)
 
@@ -259,8 +346,8 @@ class Graph:
             del self.nodes[node]
             del self.nodes[twin.id]
         
-        self.remove_from_starts(tip[0])
-        self.remove_from_starts(-tip[0])
+            self.remove_from_starts(node)
+            self.remove_from_starts(-node)
         return
     
     def clip_tips(self):
