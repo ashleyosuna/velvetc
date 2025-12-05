@@ -99,19 +99,6 @@ class Graph:
         """
         Creates initial nodes and their twins as given by the canonical kmers.
         """
-        # next_id = 1
-        
-        # for kmer in kmers:
-        #     # creating canonical node
-        #     self.nodes[next_id] = Node(kmer, next_id)
-        #     self.map_to_nodes[kmer] = next_id
-
-        #     # creating twin node
-        #     rc = reverse_complement(kmer)
-        #     self.nodes[-next_id] = Node(rc, -next_id)
-        #     self.map_to_nodes[rc] = -next_id
-            
-        #     next_id += 1
         next_id = 1
         for i in range(len(reads)):
             seq = reads[i]

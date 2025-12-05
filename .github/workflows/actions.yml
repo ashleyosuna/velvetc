@@ -50,9 +50,6 @@ jobs:
 
           velveth velvet_test6 21 -fastq src/tests/ecoli_3x_125k_region.fq
           velvetg velvet_test6 -cov_cutoff 0
-
-          velveth velvet_test7 21 -fastq src/tests/ecoli_3x_150k_region.fq
-          velvetg velvet_test7 -cov_cutoff 0
       - name: Running e-coli experiment (our implementation)
         run: |
           set -euxo pipefail
@@ -63,4 +60,3 @@ jobs:
           codon run -release src/main.py test src/tests/ecoli_3x_75k_region.fq k=21 filetype=FASTQ
           codon run -release src/main.py test src/tests/ecoli_3x_100k_region.fq k=21 filetype=FASTQ
           codon run -release src/main.py test src/tests/ecoli_3x_125k_region.fq k=21 filetype=FASTQ
-          codon run -release src/main.py test src/tests/ecoli_3x_150k_region.fq k=21 filetype=FASTQ

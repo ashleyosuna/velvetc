@@ -25,8 +25,6 @@ graph.create_init_nodes(reads, kmers)
 
 print("Initial nodes", graph.node_count)
 
-# graph.map_through_reads(reads)
-
 graph.concatenate_nodes()
 
 print("After concatenating", graph.node_count)
